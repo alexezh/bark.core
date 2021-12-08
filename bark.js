@@ -1,33 +1,3 @@
-function Game(w, h) {
-   this.scrollX = 0;
-   this._canvas = null;
-   this._width = w;
-   this._height = h;
-}
-
-Game.prototype.setScreen = function(screen) {
-   this._screen = screen;
-}
-
-// runs the game
-Game.prototype.run = function() {
-   let self = this;
-   window.requestAnimationFrame(() => self._repaint());
-}
-
-Game.prototype._repaint = function() {
-   var canvas = document.getElementById("game");
-   var ctx = canvas.getContext('2d');
-   let frameTime = performance.now();
-   ctx.save();
-   ctx.clearRect(0, 0, this._width, this._height);
-   this._screen.repaint(ctx, frameTime, this._width, this._height);
-   ctx.restore();
-
-   let self = this;
-   window.requestAnimationFrame(() => self._repaint());
-}
-
 // handles keyboard 
 const Keys = {
    Up: 'Up',
@@ -36,13 +6,20 @@ const Keys = {
    Right: 'Right'
 };
 
-function KeyboardController() {
+function Game() {
+   this._screen = null;
    this.onKey = null;
    let self = this;
    window.addEventListener('keydown', (evt) => self.onKeyDown(evt), true);   
 }
 
-KeyboardController.prototype.onKeyDown = function(evt) {
+// runs the game
+Game.prototype.run = function(screen) {
+   this._screen = screen;
+   this._screen.run();
+}
+
+Game.prototype.onKeyDown = function(evt) {
    if (this.onKey === null)
       return;
 
@@ -62,7 +39,78 @@ KeyboardController.prototype.onKeyDown = function(evt) {
    }
 }
 
-// animate number properties at fixes interval
+let game = new Game();
+
+function Screen(w, h) {
+   this._width = w;
+   this._height = h;
+   this._sprites = [];
+   this._levelMap = null;
+   this._scrollX = new NumberProperty();
+
+   Object.defineProperty(this, 'scrollX', {
+      get() {
+        return this._scrollX.get();
+      }
+    });   
+}
+
+Screen.prototype.setMap = function(levelMap) {
+   this._levelMap = levelMap;
+}
+
+Screen.prototype.run = function() {
+   let self = this;
+   window.requestAnimationFrame(() => self._repaint());
+}
+
+// repaint screen based on current scrolling position
+Screen.prototype._repaint = function() {
+   var canvas = document.getElementById("game");
+   var ctx = canvas.getContext('2d');
+   let frameTime = performance.now();
+   ctx.save();
+   ctx.clearRect(0, 0, this._width, this._height);
+
+   ctx.translate(-this.scrollX, 0);
+
+   if (this._levelMap !== null) {
+      this._levelMap.draw(ctx, 0, this._width);
+   }
+
+   this._sprites.forEach(element => {
+      element.draw(ctx);
+   });
+   
+   ctx.restore();
+
+   let self = this;
+   window.requestAnimationFrame(() => self._repaint());
+}
+
+Screen.prototype.addSprite = function(sprite) {
+   this._sprites.push(sprite);
+}
+
+Screen.prototype.addAnimation = function(animation) {
+   this._animations.push(animation);
+}
+
+Screen.prototype.scrollByX = function(delta) {
+   this._scrollX.add(delta);
+}
+
+Screen.prototype.smoothScrollByX = function(delta) {
+   this._scrollX.glide(delta, delta / 10);
+}
+
+// returns relative position to the left side
+Screen.prototype.relativePosX = function(x) {
+   return x - this.scrollX;
+}
+
+
+// keeps track of animated property
 function AnimatedValue(prop, delta, step) {
    this.prop = prop;
    this.delta = delta;
@@ -95,6 +143,7 @@ AnimatedValue.prototype.animate = function() {
    }
 }
 
+// animate number properties at fixes interval
 function PropertyAnimationManager() {
    this._props = {};
    this._nextKey = 0;
@@ -127,7 +176,7 @@ PropertyAnimationManager.prototype.processAnimation = function() {
 
 let animationManager = new PropertyAnimationManager();
 
-// properties which can be animated
+// number properties which can be animated
 function NumberProperty() {
    this._value = 0;
    this.id = animationManager.nextPropId();
@@ -143,56 +192,6 @@ NumberProperty.prototype.add = function(delta) {
 
 NumberProperty.prototype.get = function() {
    return this._value;
-}
-
-// screen holds sprites and level map
-function Screen() {
-   this._sprites = [];
-   this._levelMap = null;
-   this._scrollX = new NumberProperty();
-
-   Object.defineProperty(this, 'scrollX', {
-      get() {
-        return this._scrollX.get();
-      }
-    });   
-}
-
-Screen.prototype.setMap = function(levelMap) {
-   this._levelMap = levelMap;
-}
-
-Screen.prototype.repaint = function(ctx, frameTime, windowW, windowH) {
-   ctx.translate(-this.scrollX, 0);
-
-   if (this._levelMap !== null) {
-      this._levelMap.draw(ctx, 0, windowW);
-   }
-
-   this._sprites.forEach(element => {
-      element.draw(ctx);
-   });
-}
-
-Screen.prototype.addSprite = function(sprite) {
-   this._sprites.push(sprite);
-}
-
-Screen.prototype.addAnimation = function(animation) {
-   this._animations.push(animation);
-}
-
-Screen.prototype.scrollByX = function(delta) {
-   this._scrollX.add(delta);
-}
-
-Screen.prototype.smoothScrollByX = function(delta) {
-   this._scrollX.glide(delta, delta / 10);
-}
-
-// returns relative position to left side
-Screen.prototype.relativePosX = function(x) {
-   return x - this.scrollX;
 }
 
 // sprites

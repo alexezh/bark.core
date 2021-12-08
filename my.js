@@ -1,6 +1,4 @@
-let game = new Game(300, 300);
-let screen = new Screen();
-let keyController = new KeyboardController();
+let screen = new Screen(300, 300);
 
 // image is from
 // https://th.bing.com/th/id/R.5b0f575c42bd86b622fc9a0f8c0e03f6?rik=a4MuV9E59zvOGw&riu=http%3a%2f%2fwww.cis.upenn.edu%2f%7ecis460%2f16fa%2fhw%2fhwMM02%2fminecraft_textures_all_labeled.png&ehk=6hM%2b6OvSC7m7A6cw3%2b5kVaeDFlENHUu1jIQWXr0qBIk%3d&risl=&pid=ImgRaw&r=0
@@ -20,16 +18,15 @@ levelMap.loadMap([
    'CCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAAAA',
 ]);
 
-game.setScreen(screen);
 let mickey = new Sprite(0, 200, 100, 100, ["./m.jpg", "./2.jpg"]);
 screen.addSprite(mickey);
 screen.setMap(levelMap);
 
 mickey.setTimer(1.0, () => {
-//   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 
+   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 
 });
 
-keyController.onKey = function (key) {
+game.onKey = function (key) {
    if (key === Keys.Left) {
       mickey.moveX(-1);
       screen.scrollByX(-1);
@@ -45,4 +42,4 @@ keyController.onKey = function (key) {
    }
 }
 
-game.run();
+game.run(screen);
