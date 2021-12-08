@@ -66,6 +66,7 @@ KeyboardController.prototype.onKeyDown = function(evt) {
 function Screen() {
    this._sprites = [];
    this._levelMap = null;
+   this._scrollX = 0;
 }
 
 Screen.prototype.setMap = function(levelMap) {
@@ -73,6 +74,8 @@ Screen.prototype.setMap = function(levelMap) {
 }
 
 Screen.prototype.repaint = function(ctx, frameTime, windowW, windowH) {
+   ctx.translate(-this._scrollX, 0);
+
    if (this._levelMap !== null) {
       this._levelMap.draw(ctx, 0, windowW);
    }
@@ -90,6 +93,10 @@ Screen.prototype.addAnimation = function(animation) {
    this._animations.push(animation);
 }
 
+Screen.prototype.scrollByX = function(x) {
+   this._scrollX = this._scrollX + x;
+}
+
 // sprites
 function Sprite(x, y, w, h, skins) {
    this.x = x;
@@ -102,7 +109,7 @@ function Sprite(x, y, w, h, skins) {
    if (Array.isArray(skins)) {
       skins.forEach(elem => {
          if(typeof(elem) == 'string') {
-            this._skins.push(new SpriteImage(name, w, h));
+            this._skins.push(new SpriteImage(elem, w, h));
          } else {
             // assume that it is something which can draw
             this._skins.push(elem);

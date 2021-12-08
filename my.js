@@ -25,8 +25,10 @@ mickey.setTimer(1.0, () => {
 keyController.onKey = function (key) {
    if (key === Keys.Left) {
       mickey.moveX(-1);
+      screen.scrollByX(-1);
    } else if(key === Keys.Right) {
       mickey.moveX(1);
+      screen.scrollByX(1);
    } else if(key === Keys.Up) {
       mickey.moveY(-1);
    } else if(key === Keys.Down) {
