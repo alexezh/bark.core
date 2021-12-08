@@ -28,15 +28,8 @@
       clear: both;
     }
 </style>
-    <body>
-    <div class="row">
-        <div class="column left">
-            <canvas id="game" width="300" height="300"></canvas>
-        </div>
-      
-        <div class="column right">
-            <textarea rows="5" cols="60" name="text" placeholder="Enter text"></textarea>
-        </div>
+    <body onload="gameLoaded()">
+        <canvas id="canvas"></canvas>
     </div>
 </body>
 </html>

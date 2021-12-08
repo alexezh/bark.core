@@ -9,6 +9,7 @@ const Keys = {
 
 function Game() {
    this._screen = null;
+   this._canvas = null;
    this.onKey = null;
    let self = this;
    window.addEventListener('keydown', (evt) => self.onKeyDown(evt), true);   
@@ -17,7 +18,18 @@ function Game() {
 // runs the game
 Game.prototype.run = function(screen) {
    this._screen = screen;
-   this._screen.run();
+   this.tryRun();
+}
+
+Game.prototype.loadCanvas = function(canvas) {
+   this._canvas = canvas;
+   this.tryRun();
+}
+
+Game.prototype.tryRun = function() {
+   if(this._screen !== null && this._canvas !== null) {
+      this._screen.run(this._canvas);
+   }
 }
 
 Game.prototype.onKeyDown = function(evt) {
@@ -45,11 +57,18 @@ Game.prototype.onKeyDown = function(evt) {
 
 let game = new Game();
 
+// called when canvas is loaded
+function gameLoaded() {
+   var canvas = document.getElementById("canvas");
+   game.loadCanvas(canvas);
+}
+
 function Screen(w, h) {
    this._width = w;
    this._height = h;
    this._sprites = [];
    this._levelMap = null;
+   this._canvas = null;
    this._scrollX = new NumberProperty();
 
    Object.defineProperty(this, 'scrollX', {
@@ -63,15 +82,18 @@ Screen.prototype.setMap = function(levelMap) {
    this._levelMap = levelMap;
 }
 
-Screen.prototype.run = function() {
+Screen.prototype.run = function(canvas) {
+   this._canvas = canvas;
+   canvas.width = this._levelMap.pixelWidth();
+   canvas.height = this._levelMap.pixelHeight();
+
    let self = this;
    window.requestAnimationFrame(() => self._repaint());
 }
 
 // repaint screen based on current scrolling position
 Screen.prototype._repaint = function() {
-   var canvas = document.getElementById("game");
-   var ctx = canvas.getContext('2d');
+   var ctx = this._canvas.getContext('2d');
    let frameTime = performance.now();
    ctx.save();
    ctx.clearRect(0, 0, this._width, this._height);
@@ -209,6 +231,7 @@ function Sprite(x, y, w, h, skins) {
    this._w = w;
    this._h = h;
    this._skins = [];
+   this.animation
    this.currentSkin = 0;
 
    Object.defineProperty(this, 'x', {
