@@ -97,6 +97,11 @@ Screen.prototype.scrollByX = function(x) {
    this._scrollX = this._scrollX + x;
 }
 
+// returns relative position to left side
+Screen.prototype.relativePosX = function(x) {
+   return x - this._scrollX;
+}
+
 // sprites
 function Sprite(x, y, w, h, skins) {
    this.x = x;

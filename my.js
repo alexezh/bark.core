@@ -28,7 +28,9 @@ keyController.onKey = function (key) {
       screen.scrollByX(-1);
    } else if(key === Keys.Right) {
       mickey.moveX(1);
-      screen.scrollByX(1);
+      if(screen.relativePosX(mickey.x) > 20) {
+         screen.scrollByX(20);
+      }
    } else if(key === Keys.Up) {
       mickey.moveY(-1);
    } else if(key === Keys.Down) {
