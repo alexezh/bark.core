@@ -1,24 +1,25 @@
 let game = new Game(300, 300);
 let screen = new Screen();
+let keyController = new KeyboardController();
+
 game.setScreen(screen);
-let mickey = new Sprite(0, 200, 100, 100, "./m.jpg");
+let mickey = new Sprite(0, 200, 100, 100, ["./m.jpg", "./2.jpg"]);
 screen.addSprite(mickey);
 
-let mickeyJump = new GravityAnimator(mickey);
-screen.addAnimation(mickeyJump);
+mickey.setTimer(1.0, () => {
+   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 
+});
 
-game.onLeft = function () {
-   mickey.X = mickey.X - 1;
-}
-game.onRight = function () {
-   mickey.X = mickey.X + 1;
-}
-game.onUp = function () {
-//   mickey.Y = mickey.Y - 1;
-    mickeyJump.run(10, -10, 1);
-}
-game.onDown = function () {
-//   mickey.Y = mickey.Y + 1;
+keyController.onKey = function (key) {
+   if (key === Keys.Left) {
+      mickey.moveX(-1);
+   } else if(key === Keys.Right) {
+      mickey.moveX(1);
+   } else if(key === Keys.Up) {
+      mickey.moveY(-1);
+   } else if(key === Keys.Down) {
+      mickey.moveY(1);
+   }
 }
 
 game.run();

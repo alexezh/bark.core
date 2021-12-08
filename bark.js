@@ -1,37 +1,8 @@
 function Game(w, h) {
-   this.onDown = null;
-   this.onUp = null;
-   this.onLeft = null;
-   this.onRight = null;
-
    this.scrollX = 0;
    this._canvas = null;
    this._width = w;
    this._height = h;
-
-   let self = this;
-   window.addEventListener('keydown', (evt) => self.onKeyDown(evt), true);   
-}
-
-Game.prototype.onKeyDown = function(evt) {
-   switch (evt.keyCode) {
-      case 38:  // Up arrow was pressed
-         if (this.onUp !== null)
-            this.onUp();
-      break;
-      case 40:  // Down arrow was pressed
-         if (this.onDown !== null)
-            this.onDown();
-      break;
-      case 37:  // Left arrow was pressed
-         if (this.onLeft !== null)
-            this.onLeft();
-      break;
-      case 39:  // Right arrow was pressed
-         if (this.onRight !== null)
-            this.onRight();
-      break;
-   }
 }
 
 Game.prototype.setScreen = function(screen) {
@@ -58,19 +29,48 @@ Game.prototype.repaint = function() {
    window.requestAnimationFrame(() => self.repaint());
 }
 
+const Keys = {
+   Up: 'Up',
+   Down: 'Down',
+   Left: 'Left',
+   Right: 'Right'
+};
+
+function KeyboardController() {
+   this.onKey = null;
+   let self = this;
+   window.addEventListener('keydown', (evt) => self.onKeyDown(evt), true);   
+}
+
+KeyboardController.prototype.onKeyDown = function(evt) {
+   if (this.onKey === null)
+      return;
+
+   switch (evt.keyCode) {
+      case 38:  // Up arrow was pressed
+            this.onKey(Keys.Up);
+            break;
+      case 40:  // Down arrow was pressed
+         this.onKey(Keys.Down);
+         break;
+      case 37:  // Left arrow was pressed
+         this.onKey(Keys.Left);
+         break;
+      case 39:  // Right arrow was pressed
+         this.onKey(Keys.Right);
+         break;
+   }
+}
+
 function Screen() {
    this._sprites = [];
-   this._animations = [];
+   this._timers = [];
 }
 
 Screen.prototype.loadMap = function() {
 }
 
 Screen.prototype.repaint = function(ctx, frameTime) {
-   this._animations.forEach(function(element) {
-      element.update(frameTime);
-   });
-
    this._sprites.forEach(element => {
       element.draw(ctx);
    });
@@ -84,50 +84,46 @@ Screen.prototype.addAnimation = function(animation) {
    this._animations.push(animation);
 }
 
-function Sprite(x, y, w, h, name) {
-   this.X = x;
-   this.Y = y;
-   this.W = w;
-   this.H = h;
-   this._image = new Image();
-   this._image.src = name;
+// sprites
+function Sprite(x, y, w, h, skins) {
+   this.x = x;
+   this.y = y;
+   this.w = w;
+   this.h = h;
+   this._skins = [];
+   this.currentSkin = 0;
+
+   skins.forEach(name => {
+      let image = new Image();
+      image.src = name;
+      this._skins.push(image);
+   });
 }
 
 Sprite.prototype.draw = function(ctx) {
-   ctx.drawImage(this._image, this.X, this.Y, this.W, this.H);
+   ctx.drawImage(this._skins[this.currentSkin], this.x, this.y, this.w, this.h);
 }
 
-function GravityAnimator(sprite) {
-   this._sprite = sprite;
-   this._running = false;
-   this.speedX = 0;
-   this.speedY = 0;
-   this.acceleration = 0;
-   this.startTime = 0;
-   this._running = false;
-}
+// executes timer in seconds
+Sprite.prototype.setTimer = function(timeout, func) {
+   if (typeof(timeout) != 'number')
+      throw 'pass timeout as parameter';
 
-GravityAnimator.prototype.run = function(speedX, speedY, acceleration) {
-   this.startTime = performance.now();
-   this.speedX = speedX;
-   this.speedY = speedY;
-   this.startX = this._sprite.X;
-   this.startY = this._sprite.Y;
-   this.acceleration = acceleration;
-   this._running = true;
-}
-
-GravityAnimator.prototype.stop = function() {
-//   this._running = false;
-}
-
-GravityAnimator.prototype.update = function(frameTime) {
-   if(!this._running) {
-      return;
+   if (timeout < 0.1) {
+      timeout = 0.1;
    }
+   window.setInterval(func, timeout);
+}
 
-   let deltaTime = (frameTime - this.startTime) / 1000;
-   let speedY = this.speedY + this.acceleration * deltaTime;
-   this._sprite.X = this.startX + this.speedX * deltaTime;
-   this._sprite.Y = this.startY + this.speedY * deltaTime;
+Sprite.prototype.moveX = function(x) {
+   this.x += x;
+}
+
+Sprite.prototype.moveY = function(y) {
+   this.y += y;
+}
+
+Sprite.prototype.moveXY = function(x, y) {
+   this.x += x;
+   this.y += y;
 }
