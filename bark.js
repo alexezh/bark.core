@@ -177,8 +177,8 @@ PropertyAnimationManager.prototype.processAnimation = function() {
 let animationManager = new PropertyAnimationManager();
 
 // number properties which can be animated
-function NumberProperty() {
-   this._value = 0;
+function NumberProperty(value) {
+   this._value = (value !== undefined) ? value : 0;
    this.id = animationManager.nextPropId();
 }
 
@@ -194,15 +194,31 @@ NumberProperty.prototype.get = function() {
    return this._value;
 }
 
+NumberProperty.prototype.set = function(value) {
+   this._value = value;
+}
+
 // sprites
 function Sprite(x, y, w, h, skins) {
-   this.x = x;
-   this.y = y;
-   this.w = w;
-   this.h = h;
+   this._x = new NumberProperty(x);
+   this._y = new NumberProperty(y);
+   this._w = w;
+   this._h = h;
    this._skins = [];
    this.currentSkin = 0;
 
+   Object.defineProperty(this, 'x', {
+      get() {
+        return this._x.get();
+      }
+   });   
+
+   Object.defineProperty(this, 'y', {
+      get() {
+        return this._y.get();
+      }
+   });   
+ 
    if (Array.isArray(skins)) {
       skins.forEach(elem => {
          if(typeof(elem) == 'string') {
@@ -214,7 +230,7 @@ function Sprite(x, y, w, h, skins) {
       });
    }
    else if(typeof(skins) == 'string') {
-      this._skins.push(new SpriteImage(name, w, h));
+      this._skins.push(new SpriteImage(skins, w, h));
    } else {
       // assume that it is something which can draw
       this._skins.push(skins);
@@ -222,7 +238,7 @@ function Sprite(x, y, w, h, skins) {
 }
 
 Sprite.prototype.draw = function(ctx) {
-   this._skins[this.currentSkin].draw(ctx, this.x, this.y, this.w, this.h);
+   this._skins[this.currentSkin].draw(ctx, this.x, this.y, this._w, this._h);
 }
 
 // executes timer in seconds
@@ -236,21 +252,25 @@ Sprite.prototype.setTimer = function(timeout, func) {
    window.setInterval(func, timeout);
 }
 
-Sprite.prototype.moveX = function(x) {
-   this.x += x;
+Sprite.prototype.changeX = function(x) {
+   this._x.add(x);
 }
 
-Sprite.prototype.moveY = function(y) {
-   this.y += y;
+Sprite.prototype.changeY = function(y) {
+   this._y.add(y);
 }
 
-Sprite.prototype.moveXY = function(x, y) {
-   this.x += x;
-   this.y += y;
+Sprite.prototype.changeXY = function(x, y) {
+   this._x.add(x);
+   this._y.add(y);
 }
 
-Sprite.prototype.clone = function() {
-   return new Sprite(this.x, this.y, this.w, this.h, this._skins);
+Sprite.prototype.glideByY = function(y) {
+   this._y.glide(y, y / 10);
+}
+
+Sprite.prototype.clone = function(x, y) {
+   return new Sprite(x, y, this._w, this._h, this._skins);
 }
 
 // SpriteImage is abstraction for atlas vs bitmap images
@@ -320,9 +340,7 @@ LevelMap.prototype.loadMap = function(rows) {
          c = inputRow[i];
          let sprite = this._sprites[c];
          if(sprite !== undefined) {
-            sprite = sprite.clone();
-            sprite.x = i * this._blockH;
-            sprite.y = rowY;
+            sprite = sprite.clone(i * this._blockH, rowY);
             spriteRow.push(sprite);
          } else {
             spriteRow.push(null);
