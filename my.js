@@ -8,8 +8,8 @@ levelMap.addSprite('A', atlas.createSprite(0, 0));
 levelMap.addSprite('B', atlas.createSprite(1, 0));
 levelMap.addSprite('C', atlas.createSprite(2, 0));
 levelMap.loadMap([
-   'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-   'BBBBBBBBBBBBBBBBBAAAAAAAAAAAAAAAAAAA',
+   '  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+   'BBBBBBBBB                  AAAAAAAAAA',
    'CCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAAAA',
 ]);
 
