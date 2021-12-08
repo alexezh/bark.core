@@ -286,6 +286,10 @@ Sprite.prototype.clone = function(x, y) {
    return new Sprite(x, y, this._w, this._h, this._skins);
 }
 
+Sprite.prototype.getSkinCount = function() {
+   return this._skins.length;
+}
+
 // SpriteImage is abstraction for atlas vs bitmap images
 function SpriteImage(name, w, h) {
    this._image = new Image();
@@ -330,6 +334,35 @@ SpriteAtlas.prototype.createSprite = function(x, y) {
       this._spriteImageH);
 
    return new Sprite(0, 0, this._spriteW, this._spriteH, [spriteImage]);
+}
+
+SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
+   if (!Array.isArray(pos))
+      throw "has to be array";
+   
+   let spriteImages = [];
+
+   for(let i = 0; i < pos.length / 2; i++) {
+      spriteImages.push(new SpriteAtlasImage(
+         this._image, 
+         pos[i*2] * this._spriteImageW, 
+         pos[i*2+1] * this._spriteImageH, 
+         this._spriteImageW,
+         this._spriteImageH));
+   }
+
+   let sprite = new Sprite(0, 0, this._spriteW, this._spriteH, spriteImages);
+   if(interval !== undefined) {
+      sprite.setTimer(interval, () => {
+         let skinIndex = sprite.currentSkin + 1;
+         if(skinIndex >= sprite.getSkinCount()) {
+            skinIndex = 0;
+         }
+         sprite.currentSkin = skinIndex;
+      });
+   }
+
+   return sprite;
 }
 
 let PixelPos = { x: 0, y: 0};

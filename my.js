@@ -7,13 +7,14 @@ levelMap.addSprite('A', atlas.createSprite(6, 2));
 levelMap.addSprite('B', atlas.createSprite(1, 0));
 levelMap.addSprite('C', atlas.createSprite(0, 0));
 levelMap.addSprite('D', atlas.createSprite(7, 0));
+levelMap.addSprite('G', atlas.createSpriteAnimated([14, 4, 14, 5], 1));
 levelMap.loadMap([
    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
    'D                                  D',
    'D                                  D',
    'D                                  D',
    'D                                  D',
-   'D                                  D',
+   'D GGGGG                            D',
    'CCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAAAA',
 ]);
 
