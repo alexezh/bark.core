@@ -23,7 +23,7 @@ Game.prototype.repaint = function() {
    let frameTime = performance.now();
    ctx.save();
    ctx.clearRect(0, 0, this._width, this._height);
-   this._screen.repaint(ctx, frameTime);
+   this._screen.repaint(ctx, frameTime, this._width, this._height);
    ctx.restore();
    let self = this;
    window.requestAnimationFrame(() => self.repaint());
@@ -72,8 +72,10 @@ Screen.prototype.setMap = function(levelMap) {
    this._levelMap = levelMap;
 }
 
-Screen.prototype.repaint = function(ctx, frameTime) {
-   this._levelMap.draw(ctx, 0, );
+Screen.prototype.repaint = function(ctx, frameTime, windowW, windowH) {
+   if (this._levelMap !== null) {
+      this._levelMap.draw(ctx, 0, windowW);
+   }
 
    this._sprites.forEach(element => {
       element.draw(ctx);
@@ -143,6 +145,10 @@ Sprite.prototype.moveXY = function(x, y) {
    this.y += y;
 }
 
+Sprite.prototype.clone = function() {
+   return new Sprite(this.x, this.y, this.w, this.h, this._skins);
+}
+
 // SpriteImage is abstraction for atlas vs bitmap images
 function SpriteImage(name, w, h) {
    this._image = new Image();
@@ -152,7 +158,7 @@ function SpriteImage(name, w, h) {
 }
 
 SpriteImage.prototype.draw = function(ctx, x, y, w, h) {
-   ctx.drawImage(this.SpriteImage, x, y, w, h);
+   ctx.drawImage(this._image, x, y, w, h);
 }
 
 // image which can be used instead of actual image
@@ -190,10 +196,8 @@ SpriteAtlas.prototype.createSprite = function(x, y) {
 }
 
 // level map
-function LevelMap(mapW, mapH, blockW, blockH) {
+function LevelMap(blockW, blockH) {
    this._sprites = {};
-   this._w = w;
-   this._h = h;
    this._blockW = blockW;
    this._blockH = blockH;
    this._rows = [];
@@ -205,35 +209,41 @@ LevelMap.prototype.addSprite = function(c, sprite) {
 
 // load map as row of strings
 LevelMap.prototype.loadMap = function(rows) {
+   let rowY = 0;
    rows.forEach(inputRow => {
       let spriteRow = [];
-      inputRow.forEach(c => {
+      for(let i = 0; i < inputRow.length; i++) {
+         c = inputRow[i];
          let sprite = this._sprites[c];
          if(sprite !== undefined) {
+            sprite = sprite.clone();
+            sprite.x = i * this._blockH;
+            sprite.y = rowY;
             spriteRow.push(sprite);
          } else {
             spriteRow.push(null);
          }
-      });
+      };
 
       this._rows.push(spriteRow);
+      rowY += this._blockH;
    });
 }
 
 // draw map from position x, y with (w,h) size
 LevelMap.prototype.draw = function(ctx, x, w) {
-   let startX = x / this._spriteW;
-   let startOffset = x % this._spriteW;
-   let endX = startX + w / this._spriteW + 1;
+   let startX = x / this._blockW;
+   let startOffset = x % this._blockW;
+   let endX = startX + w / this._blockW + 1;
    let currentY = 0;
    this._rows.forEach(row => {
       for(let i = startX; i < endX; i++) {
          let sprite = row[i];
          if(sprite !== null) {
-            sprite.draw(ctx, i * this.spriteW + startOffset, currentY);
+            sprite.draw(ctx);
          }
       }
 
-      currentY += this._spriteH;
+      currentY += this._blockH;
    });
 }

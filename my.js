@@ -3,9 +3,7 @@ let screen = new Screen();
 let keyController = new KeyboardController();
 
 let atlas = new SpriteAtlas(64, 64, './mineatlas.jpg', 32, 32);
-let levelMap = new LevelMap();
-
-/*
+let levelMap = new LevelMap(32, 32);
 levelMap.addSprite('A', atlas.createSprite(0, 0));
 levelMap.addSprite('B', atlas.createSprite(1, 0));
 levelMap.addSprite('C', atlas.createSprite(2, 0));
@@ -14,12 +12,11 @@ levelMap.loadMap([
    'BBBBBBBBBBBBBBBBBAAAAAAAAAAAAAAAAAAA',
    'CCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAAAA',
 ]);
-*/
 
 game.setScreen(screen);
-//let mickey = new Sprite(0, 200, 100, 100, ["./m.jpg", "./2.jpg"]);
-let mickey = atlas.createSprite(0, 0);
+let mickey = new Sprite(0, 200, 100, 100, ["./m.jpg", "./2.jpg"]);
 screen.addSprite(mickey);
+screen.setMap(levelMap);
 
 mickey.setTimer(1.0, () => {
 //   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 
