@@ -9,15 +9,13 @@ Game.prototype.setScreen = function(screen) {
    this._screen = screen;
 }
 
-Game.prototype.scroll = function(x) {
-}
-
+// runs the game
 Game.prototype.run = function() {
    let self = this;
-   window.requestAnimationFrame(() => self.repaint());
+   window.requestAnimationFrame(() => self._repaint());
 }
 
-Game.prototype.repaint = function() {
+Game.prototype._repaint = function() {
    var canvas = document.getElementById("game");
    var ctx = canvas.getContext('2d');
    let frameTime = performance.now();
@@ -25,10 +23,12 @@ Game.prototype.repaint = function() {
    ctx.clearRect(0, 0, this._width, this._height);
    this._screen.repaint(ctx, frameTime, this._width, this._height);
    ctx.restore();
+
    let self = this;
-   window.requestAnimationFrame(() => self.repaint());
+   window.requestAnimationFrame(() => self._repaint());
 }
 
+// handles keyboard 
 const Keys = {
    Up: 'Up',
    Down: 'Down',
@@ -62,11 +62,100 @@ KeyboardController.prototype.onKeyDown = function(evt) {
    }
 }
 
+// animate number properties at fixes interval
+function AnimatedValue(prop, delta, step) {
+   this.prop = prop;
+   this.delta = delta;
+   this.step = step;
+}
+
+AnimatedValue.prototype.animate = function() {
+   if(this.delta === 0) {
+      return false;
+   } else if(this.delta > 0) {
+      if(this.delta > this.step) {
+         this.delta -= this.step;
+         this.prop.add(this.step);
+         return true;
+      } else {
+         this.prop.add(this.delta);
+         this.delta = 0;
+         return false;
+      }
+   } else {
+      if(this.delta < this.step) {
+         this.delta -= this.step;
+         this.prop.add(this.step);
+         return true;
+      } else {
+         this.prop.add(this.delta);
+         this.delta = 0;
+         return false;
+      }
+   }
+}
+
+function PropertyAnimationManager() {
+   this._props = {};
+   this._nextKey = 0;
+
+   // run animation on 100 ms
+   let self = this;
+   window.setInterval(() => self.processAnimation(), 100);
+}
+
+PropertyAnimationManager.prototype.animate = function(prop, delta, step) {
+   if(this._props[prop.id] !== undefined) {
+      return;
+   }
+
+   this._props[prop.id] = new AnimatedValue(prop, delta, step);
+}
+
+PropertyAnimationManager.prototype.nextPropId = function() {
+   return this._nextKey++;
+}
+
+PropertyAnimationManager.prototype.processAnimation = function() {
+   for(let key in this._props) {
+      let prop = this._props[key];
+      if(!prop.animate()) {
+         delete this._props[key];
+      }
+   }
+}
+
+let animationManager = new PropertyAnimationManager();
+
+// properties which can be animated
+function NumberProperty() {
+   this._value = 0;
+   this.id = animationManager.nextPropId();
+}
+
+NumberProperty.prototype.glide = function(delta, step) {
+   animationManager.animate(this, delta, step);
+}
+
+NumberProperty.prototype.add = function(delta) {
+   this._value = this._value + delta;
+}
+
+NumberProperty.prototype.get = function() {
+   return this._value;
+}
+
 // screen holds sprites and level map
 function Screen() {
    this._sprites = [];
    this._levelMap = null;
-   this._scrollX = 0;
+   this._scrollX = new NumberProperty();
+
+   Object.defineProperty(this, 'scrollX', {
+      get() {
+        return this._scrollX.get();
+      }
+    });   
 }
 
 Screen.prototype.setMap = function(levelMap) {
@@ -74,7 +163,7 @@ Screen.prototype.setMap = function(levelMap) {
 }
 
 Screen.prototype.repaint = function(ctx, frameTime, windowW, windowH) {
-   ctx.translate(-this._scrollX, 0);
+   ctx.translate(-this.scrollX, 0);
 
    if (this._levelMap !== null) {
       this._levelMap.draw(ctx, 0, windowW);
@@ -93,13 +182,17 @@ Screen.prototype.addAnimation = function(animation) {
    this._animations.push(animation);
 }
 
-Screen.prototype.scrollByX = function(x) {
-   this._scrollX = this._scrollX + x;
+Screen.prototype.scrollByX = function(delta) {
+   this._scrollX.add(delta);
+}
+
+Screen.prototype.smoothScrollByX = function(delta) {
+   this._scrollX.glide(delta, delta / 10);
 }
 
 // returns relative position to left side
 Screen.prototype.relativePosX = function(x) {
-   return x - this._scrollX;
+   return x - this.scrollX;
 }
 
 // sprites
