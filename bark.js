@@ -3,7 +3,8 @@ const Keys = {
    Up: 'Up',
    Down: 'Down',
    Left: 'Left',
-   Right: 'Right'
+   Right: 'Right',
+   Space: 'Space',
 };
 
 function Game() {
@@ -35,6 +36,9 @@ Game.prototype.onKeyDown = function(evt) {
          break;
       case 39:  // Right arrow was pressed
          this.onKey(Keys.Right);
+         break;
+      case 32:  // Space arrow was pressed
+         this.onKey(Keys.Space);
          break;
    }
 }
@@ -238,6 +242,10 @@ function Sprite(x, y, w, h, skins) {
 }
 
 Sprite.prototype.draw = function(ctx) {
+   if(this.currentSkin >= this._skins) {
+      throw "invalid skin index";
+   }
+
    this._skins[this.currentSkin].draw(ctx, this.x, this.y, this._w, this._h);
 }
 
@@ -250,6 +258,11 @@ Sprite.prototype.setTimer = function(timeout, func) {
       timeout = 0.1;
    }
    window.setInterval(func, timeout);
+}
+
+Sprite.prototype.setXY = function(x, y) {
+   this._x.set(x);
+   this._y.set(y);
 }
 
 Sprite.prototype.changeX = function(x) {
@@ -319,6 +332,8 @@ SpriteAtlas.prototype.createSprite = function(x, y) {
    return new Sprite(0, 0, this._spriteW, this._spriteH, [spriteImage]);
 }
 
+let PixelPos = { x: 0, y: 0};
+
 // level map
 function LevelMap(blockW, blockH) {
    this._sprites = {};
@@ -329,6 +344,22 @@ function LevelMap(blockW, blockH) {
 
 LevelMap.prototype.addSprite = function(c, sprite) {
    this._sprites[c] = sprite;
+}
+
+LevelMap.prototype.pixelWidth = function() {
+   return this._blockW * this._rows[0].length;
+}
+
+LevelMap.prototype.pixelHeight = function() {
+   return this._blockH * this._rows.length;
+}
+
+LevelMap.prototype.blockWidth = function() {
+   return this._blockW;
+}
+
+LevelMap.prototype.blockHeight = function() {
+   return this._blockH;
 }
 
 // load map as row of strings
@@ -368,4 +399,41 @@ LevelMap.prototype.draw = function(ctx, x, w) {
 
       currentY += this._blockH;
    });
+}
+
+LevelMap.prototype.getBlockByPixelPos = function(x, y) {
+   let blockPos = this.getBlockByPixelPos(x, y);
+   this.getBlockByBlockPos(blockPos.x, blockPos.y);
+}
+
+LevelMap.prototype.getBlockByBlockPos = function(x, y) {
+   let row = this._rows[blockPos.y];
+   if(row === undefined)
+      return null;
+   return rows[blockPos.x];
+}
+
+LevelMap.prototype.getPixelPosByBlockPos = function(x, y) {
+   return { x: x * this._blockW, y: y * this._blockH };
+}
+
+LevelMap.prototype.getBlockPosByPixelPos = function(x, y) {
+   return { x: Math.round(x / this._blockW), y: Math.round(y / this._blockH) };
+}
+
+LevelMap.prototype.setBlock = function(x, y, c) {
+   let row = this._rows[y];
+   if(row === undefined)
+      return;
+
+   if (x >= row.length)
+      return;
+
+   let sprite = this._sprites[c];
+   if(sprite !== undefined) {
+      sprite = sprite.clone(x * this._blockH, y * this._blockH);
+      row[x] = sprite;
+   } else {
+      row[x] = null;
+   }
 }

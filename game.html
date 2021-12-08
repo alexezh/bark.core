@@ -1,7 +1,42 @@
 <html>
 <script src="./bark.js"></script>
 <script src="./my.js"></script>
-<body>
-    <canvas id="game" width="300" height="300"></canvas>
+<style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    /* Create two unequal columns that floats next to each other */
+    .column {
+      float: left;
+      padding: 10px;
+      height: 300px; /* Should be removed. Only for demonstration */
+    }
+    
+    .left {
+      width: 50%;
+    }
+    
+    .right {
+      width: 50%;
+    }
+    
+    /* Clear floats after the columns */
+    .row:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+</style>
+    <body>
+    <div class="row">
+        <div class="column left">
+            <canvas id="game" width="300" height="300"></canvas>
+        </div>
+      
+        <div class="column right">
+            <textarea rows="5" cols="60" name="text" placeholder="Enter text"></textarea>
+        </div>
+    </div>
 </body>
 </html>
