@@ -2,8 +2,6 @@
 let levelMap = new LevelMap(32, 32);
 levelMap.createEmptyMap(32, 4);
 
-let screen = new Screen();
-
 function drawSmile(ctx) {
     ctx.beginPath();
     ctx.lineWidth = 1;
@@ -35,5 +33,3 @@ game.onUpdateScene = function () {
         smile.glideByY(20);
     } 
 }
-
-game.run(screen);

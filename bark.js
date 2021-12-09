@@ -623,6 +623,7 @@ LevelMap.prototype.setBlock = function(x, y, c) {
 
 // globals used by rest of code
 let game = new Game();
+let screen = new Screen();
 let input = new Input();
 let gameCode = null;
 let isGameLoaded = false;
@@ -635,6 +636,9 @@ window.addEventListener("message", (event) => {
 function tryLoadGameCode() {
    if(gameCode !== null) {
       window.eval(gameCode);
+
+      // we assume that code is loaded; start the game
+      game.run(screen);
    }
 }
 

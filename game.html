@@ -91,6 +91,7 @@
             // </iframe>
 
             gameFrameContainer.appendChild(gameFrame);
+            gameFrame.focus();
         }
         function onStop() {
             const gameFrame = document.getElementById('gameFrame');
@@ -103,9 +104,6 @@
 '// first, create an empty map of the level\r\n' +
 'let levelMap = new LevelMap(32, 32);\r\n' +
 'levelMap.createEmptyMap(32, 4);\r\n' +
-'\r\n' +
-'// second create a screen, create an empty map of the level\r\n' +
-'let screen = new Screen();\r\n' +
 '\r\n' +
 '// make a function for our sprite (can be bitmap)\r\n' +
 'function drawSmile(ctx) {\r\n' +
@@ -142,14 +140,39 @@
 '    if(input.pressedKeys.ArrowDown) {\r\n' +
 '        smile.glideByY(20);\r\n' +
 '    }\r\n' +
-'}\r\n' +
-'\r\n' +
-'// run the game\r\n' +
-'game.run(screen);';
+'}\r\n';
                 
             const codeArea = document.getElementById('codeArea');
             codeArea.value = exampleCode;
         }
+
+        function onSave() {
+            var code = document.getElementById('codeArea').value;
+            var codeBlob = new Blob([ codeBlob ], { type: 'text/plain' });
+            var fileName = "file.bark";
+
+            var downloadLink = document.createElement("a");
+            downloadLink.download = fileName;
+            downloadLink.innerHTML = "Download File";
+            if (window.webkitURL != null) {
+                // Chrome allows the link to be clicked without actually adding it to the DOM.
+                downloadLink.href = window.webkitURL.createObjectURL(codeBlob);
+            } else {
+                // Firefox requires the link to be added to the DOM before it can be clicked.
+                downloadLink.href = window.URL.createObjectURL(codeBlob);
+                downloadLink.onclick = destroyClickedElement;
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+            }
+
+            downloadLink.click();
+        }
+
+        function destroyClickedElement(event) {
+            // remove the link from the DOM
+            document.body.removeChild(event.target);
+        }
+
         function onLoaded() {
             // if loading top window, create objects
             if(window.self === window.top) {
@@ -161,9 +184,10 @@
             '<div>' +
                 '<button type="button" onclick="onRun()">run</button>'+
                 '<button type="button" onclick="onStop()">stop</button>'+
+                '<button type="button" onclick="onSave()">save</button>'+
             '</div>' +
             '<div class="textcontainer">'+
-                '<textarea class="textarea" id="codeArea" placeholder="Enter text"></textarea>'+
+                '<textarea class="textarea" id="codeArea" autocorrect="no" placeholder="Enter text"></textarea>'+
             '</div>'+
         '</div>'+
     '</div>'+
