@@ -1,5 +1,6 @@
 // handles keyboard 
 const Keys = {
+   Unknown: 'Unknown',
    Up: 'Up',
    Down: 'Down',
    Left: 'Left',
@@ -10,9 +11,12 @@ const Keys = {
 function Game() {
    this._screen = null;
    this._canvas = null;
-   this.onKey = null;
+   this.onKeyDown = null;
+   this.pressedKeys = {};
+
    let self = this;
-   window.addEventListener('keydown', (evt) => self.onKeyDown(evt), true);   
+   window.addEventListener('keydown', (evt) => self.onKeyDown(evt), false);   
+   window.addEventListener('keyup', (evt) => self.onKeyUp(evt), false);   
 }
 
 // runs the game
@@ -32,26 +36,38 @@ Game.prototype.tryRun = function() {
    }
 }
 
+Game.prototype.translateKey = function(evt) {
+   switch (evt.keyCode) {
+      case 38:  // Up arrow was pressed
+         return Keys.Up;
+      case 40:  // Down arrow was pressed
+         return Keys.Down;
+      case 37:  // Left arrow was pressed
+         return Keys.Left;
+      case 39:  // Right arrow was pressed
+         return Keys.Right;
+      case 32:  // Space arrow was pressed
+         return Keys.Space;
+      default:
+         return Keys.Unknown;
+   }
+}
+
 Game.prototype.onKeyDown = function(evt) {
    if (this.onKey === null)
       return;
 
-   switch (evt.keyCode) {
-      case 38:  // Up arrow was pressed
-         this.onKey(Keys.Up);
-         break;
-      case 40:  // Down arrow was pressed
-         this.onKey(Keys.Down);
-         break;
-      case 37:  // Left arrow was pressed
-         this.onKey(Keys.Left);
-         break;
-      case 39:  // Right arrow was pressed
-         this.onKey(Keys.Right);
-         break;
-      case 32:  // Space arrow was pressed
-         this.onKey(Keys.Space);
-         break;
+   let key = this.translateKey(evt);
+   if(key !== Keys.Unknown) {
+      this.onKeyDown(key);
+      this.pressedKeys[key] = true;
+   }
+}
+
+Game.prototype.onKeyUp = function(evt) {
+   let key = this.translateKey(evt);
+   if(key !== Keys.Unknown) {
+      this.pressedKeys[key] = false;
    }
 }
 

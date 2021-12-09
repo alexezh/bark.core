@@ -28,7 +28,7 @@ mickey.setTimer(1.0, () => {
 //   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 
 });
 
-game.onKey = function (key) {
+game.onKeyDown = function (key) {
    if (key === Keys.Left) {
       mickey.changeX(-1);
       screen.scrollByX(-1);
