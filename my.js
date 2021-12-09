@@ -28,20 +28,28 @@ mickey.setTimer(1.0, () => {
 //   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 
 });
 
-game.onKeyDown = function (key) {
-   if (key === Keys.Left) {
+game.onUpdateScene = function () {
+   if (game.pressedKeys.ArrowLeft) {
       mickey.changeX(-1);
       screen.scrollByX(-1);
-   } else if(key === Keys.Right) {
+   } 
+   
+   if(game.pressedKeys.ArrowRight) {
       mickey.changeX(1);
       if(screen.relativePosX(mickey.x) > screen.width / 3) {
          screen.smoothScrollByX(screen.width / 3);
       }
-   } else if(key === Keys.Up) {
+   }
+   
+   if(game.pressedKeys.ArrowUp) {
       mickey.glideByY(-20);
-   } else if(key === Keys.Down) {
+   } 
+   
+   if(game.pressedKeys.ArrowDown) {
       mickey.changeY(1);
-   } else if(key == Keys.Space) {
+   } 
+   
+   if(game.pressedKeys.Space) {
       let blockPos = levelMap.getBlockPosByPixelPos(mickey.x, mickey.y);
       levelMap.setBlock(blockPos.x + 1, blockPos.y, 'T');
    }

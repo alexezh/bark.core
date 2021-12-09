@@ -1,22 +1,15 @@
 // handles keyboard 
-const Keys = {
-   Unknown: 'Unknown',
-   Up: 'Up',
-   Down: 'Down',
-   Left: 'Left',
-   Right: 'Right',
-   Space: 'Space',
-};
-
 function Game() {
    this._screen = null;
    this._canvas = null;
-   this.onKeyDown = null;
+   this.onUpdateScene = null;
    this.pressedKeys = {};
 
    let self = this;
    window.addEventListener('keydown', (evt) => self.onKeyDown(evt), false);   
    window.addEventListener('keyup', (evt) => self.onKeyUp(evt), false);   
+
+   window.setInterval(() => self.updateScene(), 100);
 }
 
 // runs the game
@@ -36,39 +29,23 @@ Game.prototype.tryRun = function() {
    }
 }
 
-Game.prototype.translateKey = function(evt) {
-   switch (evt.keyCode) {
-      case 38:  // Up arrow was pressed
-         return Keys.Up;
-      case 40:  // Down arrow was pressed
-         return Keys.Down;
-      case 37:  // Left arrow was pressed
-         return Keys.Left;
-      case 39:  // Right arrow was pressed
-         return Keys.Right;
-      case 32:  // Space arrow was pressed
-         return Keys.Space;
-      default:
-         return Keys.Unknown;
-   }
-}
-
 Game.prototype.onKeyDown = function(evt) {
    if (this.onKey === null)
       return;
 
-   let key = this.translateKey(evt);
-   if(key !== Keys.Unknown) {
-      this.onKeyDown(key);
-      this.pressedKeys[key] = true;
-   }
+   this.pressedKeys[evt.code] = true;
 }
 
 Game.prototype.onKeyUp = function(evt) {
-   let key = this.translateKey(evt);
-   if(key !== Keys.Unknown) {
-      this.pressedKeys[key] = false;
+   this.pressedKeys[evt.code] = false;
+}
+
+Game.prototype.updateScene = function() {
+   if(this.onUpdateScene === null) {
+      return;
    }
+
+   return this.onUpdateScene();
 }
 
 let game = new Game();
