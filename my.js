@@ -18,11 +18,11 @@ levelMap.loadMap([
    'CCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAAAA',
 ]);
 
-let screen = new Screen(levelMap.blockHeight() * 20, levelMap.pixelHeight());
+let screen = new Screen();
 
 let mickey = new Sprite(0, 200, 32, 32, ["./2.jpg"]);
 screen.addSprite(mickey);
-screen.setMap(levelMap);
+screen.setMap(levelMap, { blockSize: 20 });
 
 mickey.setTimer(1.0, () => {
 //   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 

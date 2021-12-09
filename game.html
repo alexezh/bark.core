@@ -59,8 +59,8 @@
         }
         function onRun() {
             const gameFrameContainer = document.getElementById('gameFrameContainer');
-            const userCode = document.getElementById('userCode');
-            let text = userCode.value;
+            const codeArea = document.getElementById('codeArea');
+            let text = codeArea.value;
 
             var gameFrame = document.createElement('iframe');
             gameFrame.id = 'gameFrame';
@@ -80,6 +80,59 @@
             const gameFrameContainer = document.getElementById('gameFrameContainer');
             gameFrameContainer.removeChild(gameFrame);
         }
+        function loadExample() {
+            let exampleCode = 
+'// this demo displays graphics based sprite and moves it on screen\r\n' +
+'// first, create an empty map of the level\r\n' +
+'let levelMap = new LevelMap(32, 32);\r\n' +
+'levelMap.createEmptyMap(32, 4);\r\n' +
+'\r\n' +
+'// second create a screen, create an empty map of the level\r\n' +
+'let screen = new Screen();\r\n' +
+'\r\n' +
+'// make a function for our sprite (can be bitmap)\r\n' +
+'function drawSmile(ctx) {\r\n' +
+'    ctx.beginPath();\r\n' +
+'    ctx.lineWidth = 1;\r\n' +
+'    ctx.strokeStyle = "#325FA2";\r\n' +
+'    ctx.arc(0, 0, 16, 16, Math.PI * 2, true);\r\n' +
+'    ctx.stroke();\r\n' +
+'}\r\n' +
+'\r\n' +
+'// create a sprite\r\n' +
+'let smile = new Sprite(20, 100, 32, 32, new DynamicImage(drawSmile));\r\n' +
+'\r\n' +
+'// put things together\r\n' +
+'screen.addSprite(smile);\r\n' +
+'screen.setMap(levelMap, { blockWidth: 20 });\r\n' +
+'\r\n' +
+'// add function to handle keyboard\r\n' +
+'game.onUpdateScene = function () {\r\n' +
+'    if (input.pressedKeys.ArrowLeft) {\r\n' +
+'        smile.flipH = true;\r\n' +
+'        smile.changeX(-1);\r\n' +
+'    }\r\n' +
+
+'    if(input.pressedKeys.ArrowRight) {\r\n' +
+'        smile.flipH = false;\r\n' +
+'        smile.changeX(1);\r\n' +
+'    }\r\n' +
+
+'    if(input.pressedKeys.ArrowUp) {\r\n' +
+'        smile.glideByY(-20);\r\n' +
+'    }\r\n' +
+
+'    if(input.pressedKeys.ArrowDown) {\r\n' +
+'        smile.glideByY(20);\r\n' +
+'    }\r\n' +
+'}\r\n' +
+'\r\n' +
+'// run the game\r\n' +
+'game.run(screen);';
+                
+            const codeArea = document.getElementById('codeArea');
+            codeArea.value = exampleCode;
+        }
         function onLoaded() {
             // if loading top window, create objects
             if(window.self === window.top) {
@@ -93,13 +146,15 @@
                 '<button type="button" onclick="onStop()">stop</button>'+
             '</div>' +
             '<div class="textcontainer">'+
-                '<textarea class="textarea" id="userCode" placeholder="Enter text"></textarea>'+
+                '<textarea class="textarea" id="codeArea" placeholder="Enter text"></textarea>'+
             '</div>'+
         '</div>'+
     '</div>'+
 '</div>';
                 const body = document.getElementById('body');
                 body.innerHTML = bodyContent;
+
+                loadExample();
             }
             else {
                 const body = document.getElementById('body');

@@ -50,9 +50,9 @@ Game.prototype.updateScene = function() {
    return this.onUpdateScene();
 }
 
-function Screen(w, h) {
-   this._width = w;
-   this._height = h;
+function Screen() {
+   this._width = undefined;
+   this._height = undefined;
    this._sprites = [];
    this._levelMap = null;
    this._canvas = null;
@@ -77,8 +77,15 @@ function Screen(w, h) {
     });   
 }
 
-Screen.prototype.setMap = function(levelMap) {
+Screen.prototype.setMap = function(levelMap, blockSize) {
    this._levelMap = levelMap;
+
+   let mapSize = this._levelMap.mapSize();
+   let w = blockSize.blockWidth === undefined ? mapSize.blockWidth : blockSize.blockWidth;
+   let h = blockSize.blockHeight === undefined ? mapSize.blockHeight : blockSize.blockHeight;
+   
+   this._width = this._levelMap.blockWidth() * w;
+   this._height = this._levelMap.blockHeight() * h;
 }
 
 Screen.prototype.run = function(canvas) {
@@ -410,6 +417,18 @@ Sprite.prototype.getSkinCount = function() {
    return this._skins.length;
 }
 
+// DynamicImage is abstraction for atlas vs bitmap images
+function DynamicImage(func) {
+   this._drawFunc = func;
+}
+
+DynamicImage.prototype.draw = function(ctx, x, y, w, h) {
+   ctx.save();
+   ctx.translate(x, y);
+   this._drawFunc(ctx);
+   ctx.restore();
+}
+
 // SpriteImage is abstraction for atlas vs bitmap images
 function SpriteImage(name, w, h) {
    this._image = new Image();
@@ -422,7 +441,7 @@ SpriteImage.prototype.draw = function(ctx, x, y, w, h) {
    ctx.drawImage(this._image, x, y, w, h);
 }
 
-// image which can be used instead of actual image
+// SpriteAtlasImage is similar to SpriteImage but takes source from atlas
 function SpriteAtlasImage(atlas, x, y, w, h) {
    this._image = atlas;
    this._x = x;
@@ -435,7 +454,8 @@ SpriteAtlasImage.prototype.draw = function(ctx, x, y, w, h) {
    ctx.drawImage(this._image, this._x, this._y, this._w, this._h, x, y, w, h);
 }
 
-// atlas
+// atlas is a set of images combined into a single resource
+// provides a way to create individual sprite images
 function SpriteAtlas(spriteImageW, spriteImageH, name, spriteW, spriteH) {
    this._image = new Image();
    this._image.src = name;
@@ -478,7 +498,8 @@ SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
 
 let PixelPos = { x: 0, y: 0};
 
-// level map
+// LevelMap provides a way to render a map based on set of characters
+// each character references sprite registered with addSprite call
 function LevelMap(blockW, blockH) {
    this._sprites = {};
    this._blockW = blockW;
@@ -498,15 +519,33 @@ LevelMap.prototype.pixelHeight = function() {
    return this._blockH * this._rows.length;
 }
 
+// width of single block
 LevelMap.prototype.blockWidth = function() {
    return this._blockW;
 }
 
+// height of single block
 LevelMap.prototype.blockHeight = function() {
    return this._blockH;
 }
 
+LevelMap.prototype.mapSize = function() {
+   return { blockWidth: this._rows.length, blockHeight: this._rows[0].length };
+}
+
+// create empty map
+LevelMap.prototype.createEmptyMap = function(w, h) {
+   for(let i = 0; i < h; i++) {
+      let row = [];
+      for(let j = 0; j < w; j++) {
+         row.push(null);
+      }
+      this._rows.push(row);
+   }
+}
+
 // load map as row of strings
+// each char corresponds to sprite registered with createSprite call
 LevelMap.prototype.loadMap = function(rows) {
    let rowY = 0;
    rows.forEach(inputRow => {
@@ -582,6 +621,7 @@ LevelMap.prototype.setBlock = function(x, y, c) {
    }
 }
 
+// globals used by rest of code
 let game = new Game();
 let input = new Input();
 let gameCode = null;
