@@ -52,21 +52,49 @@
         box-sizing: border-box;         /* Opera/IE 8+ */
     }
 </style>
-    <body">
+    <script src="./bark.js"></script>
+    <script>
+        function loadGame(gameFrame, code) {
+            gameFrame.contentWindow.postMessage(code, '*');
+        }
+        function onRun() {
+            if (window.self === window.top) {
+                alert('top window');
+            }
+
+            const gameFrameContainer = document.getElementById('gameFrameContainer');
+            const userCode = document.getElementById('userCode');
+            let text = userCode.value;
+
+            var gameFrame = document.createElement('iframe');
+            gameFrame.id = 'gameFrame';
+            gameFrame.src = document.location;
+            gameFrame.onload = function() {
+                loadGame(gameFrame, text);
+            };
+            // <iframe id="gameFrame" width="100%" height="100%" src="./">
+            // </iframe>
+
+            gameFrameContainer.appendChild(gameFrame);
+        }
+        function onStop() {
+            const gameFrame = document.getElementById('gameFrame');
+            gameFrame.contentWindow.postMessage("hello", '*');
+        }
+    </script>
+    <body>
         <div class="row">
-            <div class="column left" height="100%">
-                <iframe width="100%" height="100%" srcdoc="<html><script src=&quot;./bark.js&quot;></script></script><body onload=&quot;gameLoaded()&quot;><canvas id=&quot;canvas&quot;></canvas></body></html>">
-                </iframe>
+            <div class="column left" hight="100%" id="gameFrameContainer">
             </div>
     
             <div class="column right" height="100%">
                 <div class="editor">
                     <div>
-                        <button type="button">run</button>
-                        <button type="button">stop</button>
+                        <button type="button" onclick="onRun()">run</button>
+                        <button type="button" onclick="onStop()">stop</button>
                     </div>>
                     <div class="textcontainer">
-                        <textarea class="textarea" name="text" placeholder="Enter text"></textarea>
+                        <textarea class="textarea" id="userCode" placeholder="Enter text"></textarea>
                     </div>
                 </div>
             </div>

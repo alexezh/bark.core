@@ -50,9 +50,6 @@ Game.prototype.updateScene = function() {
    return this.onUpdateScene();
 }
 
-let game = new Game();
-let input = new Input();
-
 // called when canvas is loaded
 function gameLoaded() {
    var canvas = document.getElementById("canvas");
@@ -590,3 +587,15 @@ LevelMap.prototype.setBlock = function(x, y, c) {
       row[x] = null;
    }
 }
+
+let game = new Game();
+let input = new Input();
+
+window.addEventListener("message", (event) => {
+   alert('hello');
+}, false);
+
+window.onmessage = function(event){
+   alert('hello');
+   console(event.data);
+};
