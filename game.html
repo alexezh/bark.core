@@ -58,10 +58,6 @@
             gameFrame.contentWindow.postMessage(code, '*');
         }
         function onRun() {
-            if (window.self === window.top) {
-                alert('top window');
-            }
-
             const gameFrameContainer = document.getElementById('gameFrameContainer');
             const userCode = document.getElementById('userCode');
             let text = userCode.value;
@@ -69,6 +65,8 @@
             var gameFrame = document.createElement('iframe');
             gameFrame.id = 'gameFrame';
             gameFrame.src = document.location;
+            gameFrame.width = "100%";
+            gameFrame.height = "100%";
             gameFrame.onload = function() {
                 loadGame(gameFrame, text);
             };
@@ -79,26 +77,35 @@
         }
         function onStop() {
             const gameFrame = document.getElementById('gameFrame');
-            gameFrame.contentWindow.postMessage("hello", '*');
+            const gameFrameContainer = document.getElementById('gameFrameContainer');
+            gameFrameContainer.removeChild(gameFrame);
+        }
+        function onLoaded() {
+            // if loading top window, create objects
+            if(window.self === window.top) {
+                var bodyContent = 
+'<div class="row">' +
+    '<div class="column left" hight="100%" id="gameFrameContainer"></div>' +
+    '<div class="column right" height="100%">' +
+        '<div class="editor">'+
+            '<div>' +
+                '<button type="button" onclick="onRun()">run</button>'+
+                '<button type="button" onclick="onStop()">stop</button>'+
+            '</div>' +
+            '<div class="textcontainer">'+
+                '<textarea class="textarea" id="userCode" placeholder="Enter text"></textarea>'+
+            '</div>'+
+        '</div>'+
+    '</div>'+
+'</div>';
+                const body = document.getElementById('body');
+                body.innerHTML = bodyContent;
+            }
+            else {
+                const body = document.getElementById('body');
+                loadGameFrame(body);
+            }
         }
     </script>
-    <body>
-        <div class="row">
-            <div class="column left" hight="100%" id="gameFrameContainer">
-            </div>
-    
-            <div class="column right" height="100%">
-                <div class="editor">
-                    <div>
-                        <button type="button" onclick="onRun()">run</button>
-                        <button type="button" onclick="onStop()">stop</button>
-                    </div>>
-                    <div class="textcontainer">
-                        <textarea class="textarea" id="userCode" placeholder="Enter text"></textarea>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
+    <body id="body" onload="onLoaded()"></body>
 </html>

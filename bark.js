@@ -50,12 +50,6 @@ Game.prototype.updateScene = function() {
    return this.onUpdateScene();
 }
 
-// called when canvas is loaded
-function gameLoaded() {
-   var canvas = document.getElementById("canvas");
-   game.loadCanvas(canvas);
-}
-
 function Screen(w, h) {
    this._width = w;
    this._height = h;
@@ -590,12 +584,29 @@ LevelMap.prototype.setBlock = function(x, y, c) {
 
 let game = new Game();
 let input = new Input();
+let gameCode = null;
+let isGameLoaded = false;
 
 window.addEventListener("message", (event) => {
-   alert('hello');
+   gameCode = event.data;
+   tryLoadGameCode();
 }, false);
 
-window.onmessage = function(event){
-   alert('hello');
-   console(event.data);
-};
+function tryLoadGameCode() {
+   if(gameCode !== null) {
+      window.eval(gameCode);
+   }
+}
+
+// called when canvas is loaded
+function loadGameFrame(body) {
+   body.innerHtml = '<canvas id="canvas"></canvas>'
+   var canvas = document.createElement('canvas');
+   canvas.id = 'canvas';
+   body.appendChild(canvas);
+
+   game.loadCanvas(canvas);
+   isGameLoaded = true;
+   tryLoadGameCode();
+}
+
