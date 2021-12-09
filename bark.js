@@ -1,14 +1,27 @@
-// handles keyboard 
-function Game() {
-   this._screen = null;
-   this._canvas = null;
-   this.onUpdateScene = null;
+function Input() {
    this.pressedKeys = {};
 
    let self = this;
    window.addEventListener('keydown', (evt) => self.onKeyDown(evt), false);   
    window.addEventListener('keyup', (evt) => self.onKeyUp(evt), false);   
+}
 
+Input.prototype.onKeyDown = function(evt) {
+   this.pressedKeys[evt.code] = true;
+}
+
+Input.prototype.onKeyUp = function(evt) {
+   this.pressedKeys[evt.code] = false;
+}
+
+
+// handles keyboard 
+function Game() {
+   this._screen = null;
+   this._canvas = null;
+   this.onUpdateScene = null;
+
+   let self = this;
    window.setInterval(() => self.updateScene(), 100);
 }
 
@@ -29,17 +42,6 @@ Game.prototype.tryRun = function() {
    }
 }
 
-Game.prototype.onKeyDown = function(evt) {
-   if (this.onKey === null)
-      return;
-
-   this.pressedKeys[evt.code] = true;
-}
-
-Game.prototype.onKeyUp = function(evt) {
-   this.pressedKeys[evt.code] = false;
-}
-
 Game.prototype.updateScene = function() {
    if(this.onUpdateScene === null) {
       return;
@@ -49,6 +51,7 @@ Game.prototype.updateScene = function() {
 }
 
 let game = new Game();
+let input = new Input();
 
 // called when canvas is loaded
 function gameLoaded() {
@@ -91,6 +94,8 @@ Screen.prototype.run = function(canvas) {
    this._canvas = canvas;
    canvas.width = this._width;
    canvas.height = this._height;
+   this._cameraX = undefined;
+   this._cameraY = undefined;
 
    let self = this;
    window.requestAnimationFrame(() => self._repaint());
@@ -140,6 +145,36 @@ Screen.prototype.relativePosX = function(x) {
    return x - this.scrollX;
 }
 
+Screen.prototype.setCamera = function(x, y) {
+
+   // ignore boundary if undefined
+   if(this._cameraX !== undefined) {
+      let shiftX = 0;
+
+      if(x > this._cameraX) {
+         if(this.relativePosX(x) > screen.width * 3 / 4) {
+            shiftX = this.width / 2;
+         }
+      }
+
+      if(x < this._cameraX) {
+         if(this.relativePosX(x) > this.width * 3 / 4) {
+            shiftX = -this.width / 2;
+         }
+      }
+
+      if(this._scrollX + shiftX > this._levelMap.pixelWidth() - this._width) {
+         shiftX = this._levelMap.pixelWidth() - this._width - this._scrollX;
+      }
+
+      if(shiftX !== 0) {
+         this.smoothScrollByX(shiftX);
+      }
+   }
+
+   this._cameraX = x;
+   this._cameraY = y;
+}
 
 // keeps track of animated property
 function LinearAnimatedValue(prop, delta, step) {
@@ -273,6 +308,7 @@ function Sprite(x, y, w, h, skins, animate) {
    this._skins = [];
    this._animate = (animate !== undefined) ? animate : false;
    this._currentSkin = new NumberProperty(0);
+   this.flipH = false;
 
    Object.defineProperty(this, 'x', {
       get() {
@@ -323,7 +359,21 @@ Sprite.prototype.draw = function(ctx) {
       throw "invalid skin index";
    }
 
-   this._skins[this.currentSkin].draw(ctx, this.x, this.y, this._w, this._h);
+   let restore = false;
+   let x = this.x;
+   if(this.flipH) {
+      ctx.save();
+      ctx.scale(-1, 1);
+      x = -x - this._w;
+      restore = true;
+
+   }
+
+   this._skins[this.currentSkin].draw(ctx, x, this.y, this._w, this._h);
+
+   if(restore) {
+      ctx.restore();
+   }
 }
 
 // executes timer in seconds
@@ -360,7 +410,9 @@ Sprite.prototype.glideByY = function(y) {
 }
 
 Sprite.prototype.clone = function(x, y) {
-   return new Sprite(x, y, this._w, this._h, this._skins, this._animate);
+   let sprite = new Sprite(x, y, this._w, this._h, this._skins, this._animate);
+   sprite.flipH = this.flipH;
+   return sprite;
 }
 
 Sprite.prototype.getSkinCount = function() {
