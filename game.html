@@ -21,6 +21,14 @@
         height: 100%;
     }
 
+    /* Clear floats after the columns */
+    .row:after {
+        height: 100%;
+        content: "";
+        display: table;
+        clear: both;
+    }
+
     .editor {
         display: flex;
         flex-direction: column;    
@@ -33,18 +41,7 @@
     }
 
     .textcontainer {
-        
-        overflow: hidden;
-        height: 100%;
-        width: 100%;
-    }
-
-    /* Clear floats after the columns */
-    .row:after {
-        height: 100%;
-        content: "";
-        display: table;
-        clear: both;
+        flex-grow: 1;        
     }
 
     textarea {
