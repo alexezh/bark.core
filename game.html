@@ -1,6 +1,4 @@
 <html>
-<script src="./bark.js"></script>
-<script src="./my.js"></script>
 <style>
     * {
       box-sizing: border-box;
@@ -14,22 +12,68 @@
     }
     
     .left {
-      width: 50%;
+        width: 50%;
+        height: 100%;
     }
     
     .right {
-      width: 50%;
+        width: 50%;
+        height: 100%;
     }
-    
+
+    .editor {
+        display: flex;
+        flex-direction: column;    
+        height: 100%;
+        width: 100%;
+    }
+
+    .toolbar {
+        flex-grow: 0;
+    }
+
+    .textcontainer {
+        
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+    }
+
     /* Clear floats after the columns */
     .row:after {
-      content: "";
-      display: table;
-      clear: both;
+        height: 100%;
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    textarea {
+        width: 100%;
+        height: 100%;
+        -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+        -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+        box-sizing: border-box;         /* Opera/IE 8+ */
     }
 </style>
-    <body onload="gameLoaded()">
-        <canvas id="canvas"></canvas>
+    <body">
+        <div class="row">
+            <div class="column left" height="100%">
+                <iframe width="100%" height="100%" srcdoc="<html><script src=&quot;./bark.js&quot;></script></script><body onload=&quot;gameLoaded()&quot;><canvas id=&quot;canvas&quot;></canvas></body></html>">
+                </iframe>
+            </div>
+    
+            <div class="column right" height="100%">
+                <div class="editor">
+                    <div>
+                        <button type="button">run</button>
+                        <button type="button">stop</button>
+                    </div>>
+                    <div class="textcontainer">
+                        <textarea class="textarea" name="text" placeholder="Enter text"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
