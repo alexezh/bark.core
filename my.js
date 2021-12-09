@@ -7,7 +7,7 @@ levelMap.addSprite('A', atlas.createSprite(6, 2));
 levelMap.addSprite('B', atlas.createSprite(1, 0));
 levelMap.addSprite('C', atlas.createSprite(0, 0));
 levelMap.addSprite('D', atlas.createSprite(7, 0));
-levelMap.addSprite('G', atlas.createSpriteAnimated([14, 4, 14, 5], 1));
+levelMap.addSprite('G', atlas.createSpriteAnimated([12, 5, 13, 5], 1));
 levelMap.loadMap([
    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
    'D                                  D',
@@ -34,8 +34,8 @@ game.onKey = function (key) {
       screen.scrollByX(-1);
    } else if(key === Keys.Right) {
       mickey.changeX(1);
-      if(screen.relativePosX(mickey.x) > 20) {
-         screen.smoothScrollByX(20);
+      if(screen.relativePosX(mickey.x) > screen.width / 3) {
+         screen.smoothScrollByX(screen.width / 3);
       }
    } else if(key === Keys.Up) {
       mickey.glideByY(-20);

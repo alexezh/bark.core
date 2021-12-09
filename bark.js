@@ -38,8 +38,8 @@ Game.prototype.onKeyDown = function(evt) {
 
    switch (evt.keyCode) {
       case 38:  // Up arrow was pressed
-            this.onKey(Keys.Up);
-            break;
+         this.onKey(Keys.Up);
+         break;
       case 40:  // Down arrow was pressed
          this.onKey(Keys.Down);
          break;
@@ -76,6 +76,18 @@ function Screen(w, h) {
         return this._scrollX.get();
       }
     });   
+
+    Object.defineProperty(this, 'width', {
+      get() {
+        return this._width;
+      }
+    });   
+
+    Object.defineProperty(this, 'height', {
+      get() {
+        return this._height;
+      }
+    });   
 }
 
 Screen.prototype.setMap = function(levelMap) {
@@ -84,8 +96,8 @@ Screen.prototype.setMap = function(levelMap) {
 
 Screen.prototype.run = function(canvas) {
    this._canvas = canvas;
-   canvas.width = this._levelMap.pixelWidth();
-   canvas.height = this._levelMap.pixelHeight();
+   canvas.width = this._width;
+   canvas.height = this._height;
 
    let self = this;
    window.requestAnimationFrame(() => self._repaint());
@@ -137,13 +149,13 @@ Screen.prototype.relativePosX = function(x) {
 
 
 // keeps track of animated property
-function AnimatedValue(prop, delta, step) {
+function LinearAnimatedValue(prop, delta, step) {
    this.prop = prop;
    this.delta = delta;
    this.step = step;
 }
 
-AnimatedValue.prototype.animate = function() {
+LinearAnimatedValue.prototype.animate = function(frameTime) {
    if(this.delta === 0) {
       return false;
    } else if(this.delta > 0) {
@@ -169,6 +181,29 @@ AnimatedValue.prototype.animate = function() {
    }
 }
 
+function DiscreteAnimatedValue(prop, value, maxValue, intervalSeconds) {
+   this.prop = prop;
+   this.value = value;
+   this.maxValue = maxValue;
+   this.intervalMs = intervalSeconds * 1000;
+   this.lastFrameTime = performance.now();
+}
+
+DiscreteAnimatedValue.prototype.animate = function(frameTime) {
+   if(this.lastFrameTime + this.intervalMs > frameTime)
+      return true;
+
+   let newValue = this.value + 1;
+   if(newValue >= this.maxValue) 
+      newValue = 0;
+
+   this.value = newValue;
+   this.prop.set(newValue);
+   this.lastFrameTime = frameTime;
+
+   return true;
+} 
+
 // animate number properties at fixes interval
 function PropertyAnimationManager() {
    this._props = {};
@@ -179,12 +214,23 @@ function PropertyAnimationManager() {
    window.setInterval(() => self.processAnimation(), 100);
 }
 
-PropertyAnimationManager.prototype.animate = function(prop, delta, step) {
+PropertyAnimationManager.prototype.animateLinear = function(prop, delta, step) {
    if(this._props[prop.id] !== undefined) {
       return;
    }
 
-   this._props[prop.id] = new AnimatedValue(prop, delta, step);
+   this._props[prop.id] = new LinearAnimatedValue(prop, delta, step);
+}
+
+PropertyAnimationManager.prototype.animate = function(prop, animator) {
+   if (prop === undefined || animator == undefined) 
+      throw "missing required args";
+
+   if(this._props[prop.id] !== undefined) {
+      return;
+   }
+
+   this._props[prop.id] = animator;
 }
 
 PropertyAnimationManager.prototype.nextPropId = function() {
@@ -192,9 +238,10 @@ PropertyAnimationManager.prototype.nextPropId = function() {
 }
 
 PropertyAnimationManager.prototype.processAnimation = function() {
+   let frameTime = performance.now();
    for(let key in this._props) {
       let prop = this._props[key];
-      if(!prop.animate()) {
+      if(!prop.animate(frameTime)) {
          delete this._props[key];
       }
    }
@@ -209,7 +256,7 @@ function NumberProperty(value) {
 }
 
 NumberProperty.prototype.glide = function(delta, step) {
-   animationManager.animate(this, delta, step);
+   animationManager.animateLinear(this, delta, step);
 }
 
 NumberProperty.prototype.add = function(delta) {
@@ -225,14 +272,14 @@ NumberProperty.prototype.set = function(value) {
 }
 
 // sprites
-function Sprite(x, y, w, h, skins) {
+function Sprite(x, y, w, h, skins, animate) {
    this._x = new NumberProperty(x);
    this._y = new NumberProperty(y);
    this._w = w;
    this._h = h;
    this._skins = [];
-   this.animation
-   this.currentSkin = 0;
+   this._animate = (animate !== undefined) ? animate : false;
+   this._currentSkin = new NumberProperty(0);
 
    Object.defineProperty(this, 'x', {
       get() {
@@ -246,6 +293,16 @@ function Sprite(x, y, w, h, skins) {
       }
    });   
  
+   Object.defineProperty(this, 'currentSkin', {
+      get() {
+         return this._currentSkin.get();
+      },
+      set(newValue) {
+        return this._currentSkin.set(newValue);
+      }
+    });   
+
+
    if (Array.isArray(skins)) {
       skins.forEach(elem => {
          if(typeof(elem) == 'string') {
@@ -261,6 +318,10 @@ function Sprite(x, y, w, h, skins) {
    } else {
       // assume that it is something which can draw
       this._skins.push(skins);
+   }
+
+   if(this._animate) {
+      animationManager.animate(this._currentSkin, new DiscreteAnimatedValue(this._currentSkin, 0, this._skins.length, 1.0));
    }
 }
 
@@ -306,7 +367,7 @@ Sprite.prototype.glideByY = function(y) {
 }
 
 Sprite.prototype.clone = function(x, y) {
-   return new Sprite(x, y, this._w, this._h, this._skins);
+   return new Sprite(x, y, this._w, this._h, this._skins, this._animate);
 }
 
 Sprite.prototype.getSkinCount = function() {
@@ -365,7 +426,7 @@ SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
    
    let spriteImages = [];
 
-   for(let i = 0; i < pos.length / 2; i++) {
+   for(let i = 0; i < Math.round(pos.length) / 2; i++) {
       spriteImages.push(new SpriteAtlasImage(
          this._image, 
          pos[i*2] * this._spriteImageW, 
@@ -374,16 +435,7 @@ SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
          this._spriteImageH));
    }
 
-   let sprite = new Sprite(0, 0, this._spriteW, this._spriteH, spriteImages);
-   if(interval !== undefined) {
-      sprite.setTimer(interval, () => {
-         let skinIndex = sprite.currentSkin + 1;
-         if(skinIndex >= sprite.getSkinCount()) {
-            skinIndex = 0;
-         }
-         sprite.currentSkin = skinIndex;
-      });
-   }
+   let sprite = new Sprite(0, 0, this._spriteW, this._spriteH, spriteImages, true);
 
    return sprite;
 }
