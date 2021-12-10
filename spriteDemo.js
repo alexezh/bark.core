@@ -6,9 +6,9 @@ function spriteDemo() {
    levelMap.addSprite('A', atlas.createSprite({ x: 6, y: 2}));
    levelMap.addSprite('B', atlas.createSprite({ x: 1, y: 0}));
    levelMap.addSprite('C', atlas.createSprite({ x: 0, y: 0}));
-   levelMap.addSprite('D', atlas.createSprite({ x: 7, y: 0, 
-      animations: [(sprite) => animator.animate(sprite.$x, new LoopLinearAnimator(sprite.$x, 2.0, 0.1))]}));   
-//   levelMap.addSprite('D', atlas.createSprite({ x: 7, y: 0}));
+//   levelMap.addSprite('D', atlas.createSprite({ x: 7, y: 0, 
+//      animations: [(sprite) => animator.animate(sprite.$x, new LoopLinearAnimator(sprite.$x, 2.0, 0.1))]}));   
+   levelMap.addSprite('D', atlas.createSprite({ x: 7, y: 0}));
    levelMap.addSprite('G', atlas.createSpriteAnimated([12, 5, 13, 5], 1));
    levelMap.loadMap([
       'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -39,7 +39,7 @@ function spriteDemo() {
          if(speedX < -4) speedX = -4;
 
          mickey.flipH = true;
-         mickey.$x.add(speedX);
+         mickey.x += speedX;
       } 
       
       if(input.pressedKeys.ArrowRight) {
@@ -47,16 +47,16 @@ function spriteDemo() {
          speedX += 1;
          if(speedX > 4) speedX = 4;
 
-         mickey.$x.add(speedX);
+         mickey.x += speedX;
          mickey.flipH = false;
       }
       
       if(input.pressedKeys.ArrowUp) {
-         mickey.$y.glide(-20, -2);
+         animator.glide({obj: mickey, prop: "y", delta: -20, step: -2});
       } 
       
       if(input.pressedKeys.ArrowDown) {
-         mickey.$y.add(1);
+         mickey.y += 1;
       } 
       
       if(input.pressedKeys.Space) {
