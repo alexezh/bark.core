@@ -31,7 +31,7 @@ function spriteDemo() {
 
    let speedX = 0;
 
-   game.onUpdateScene = function () {
+   function moveMickey() {
       if (input.pressedKeys.ArrowLeft) {
 
          if(speedX > 0) speedX = 0;
@@ -58,7 +58,18 @@ function spriteDemo() {
       if(input.pressedKeys.ArrowDown) {
          mickey.y += 1;
       } 
+   }
+
+   // called after animations completed
+   animator.onUpdateScene = function () {
+      moveMickey();
       
+      // see if mickey is falling
+      let below = screen.findTileBelow(mickey.left, mickey.bottom);
+      if(below !== null && mickey.bottom < below.top - 1) {
+         mickey.top += 1;
+      }
+
       if(input.pressedKeys.Space) {
          let blockPos = screen.getMapPosByPixelPos(mickey.x, mickey.y);
          levelMap.setBlock(blockPos.gridX + 1, blockPos.gridY, 'T');
