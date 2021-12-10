@@ -133,20 +133,20 @@
 'game.onUpdateScene = function () {\r\n' +
 '    if (input.pressedKeys.ArrowLeft) {\r\n' +
 '        smile.flipH = true;\r\n' +
-'        smile.changeX(-1);\r\n' +
+'        smile.$x.add(-1);\r\n' +
 '    }\r\n' +
 
 '    if(input.pressedKeys.ArrowRight) {\r\n' +
 '        smile.flipH = false;\r\n' +
-'        smile.changeX(1);\r\n' +
+'        smile.$x.add(1);\r\n' +
 '    }\r\n' +
 
 '    if(input.pressedKeys.ArrowUp) {\r\n' +
-'        smile.glideByY(-20);\r\n' +
+'        smile.$y.glide(-20, -2);\r\n' +
 '    }\r\n' +
 
 '    if(input.pressedKeys.ArrowDown) {\r\n' +
-'        smile.glideByY(20);\r\n' +
+'        smile.$y.glide(20, 2);\r\n' +
 '    }\r\n' +
 '}\r\n';
                 

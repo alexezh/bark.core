@@ -83,24 +83,29 @@ LinearAnimatedValue.prototype.animate = function(frameTime) {
    }
 }
 
-function DiscreteAnimatedValue(prop, value, maxValue, intervalSeconds) {
+// goes through list of values in array
+function DiscreteAnimatedValue(prop, values, intervalSeconds) {
+   if(!Array.isArray(values)) {
+      throw "Invalid argument type";
+   }
    this.prop = prop;
-   this.value = value;
-   this.maxValue = maxValue;
+   this.values = values;
+   this.index = 0;
    this.intervalMs = intervalSeconds * 1000;
    this.lastFrameTime = performance.now();
+   this.prop.set(this.values[this.index]);
 }
 
 DiscreteAnimatedValue.prototype.animate = function(frameTime) {
    if(this.lastFrameTime + this.intervalMs > frameTime)
       return true;
 
-   let newValue = this.value + 1;
-   if(newValue >= this.maxValue) 
-      newValue = 0;
+   let newIndex = this.index + 1;
+   if(newIndex >= this.values.length) 
+      newIndex = 0;
 
-   this.value = newValue;
-   this.prop.set(newValue);
+   this.index = newIndex;
+   this.prop.set(this.values[newIndex]);
    this.lastFrameTime = frameTime;
 
    return true;
@@ -173,15 +178,23 @@ NumberProperty.prototype.set = function(value) {
    this._value = value;
 }
 
-// sprites
-function Sprite(x, y, w, h, skins, animate) {
+// create sprite object
+// x - x coordinate of sprite
+// y - y coordinate of sprite
+// w - sprite width
+// h - sprite height
+// skins - array of either string resource names or SpriteImage type objects
+// animations - array of functions which initialize animations for this sprite
+//              functions should take sprite as parameter
+function Sprite({ source, x, y, w, h, skins, animations }) {
    this._skins = [];
-   this._animate = (animate !== undefined) ? animate : false;
-   this.flipH = false;
-   this.$x = new NumberProperty(x);
-   this.$y = new NumberProperty(y);
-   this.$w = new NumberProperty(w);
-   this.$h = new NumberProperty(h);
+   this._animations = animations === undefined && source !== undefined ? source._animations : animations;
+
+   this.$flipH = new NumberProperty(false);
+   this.$x = new NumberProperty(x === undefined ? source.x : x);
+   this.$y = new NumberProperty(y === undefined ? source.y : y);
+   this.$w = new NumberProperty(w === undefined ? source.w : w);
+   this.$h = new NumberProperty(h === undefined ? source.h : h);
    this.$skin = new NumberProperty(0);
 
    Object.defineProperty(this, 'x', {
@@ -200,11 +213,17 @@ function Sprite(x, y, w, h, skins, animate) {
       get() { return this.$h.get(); }
    });   
 
+   Object.defineProperty(this, 'flipH', {
+      get() { return this.$flipH.get(); },
+      set(newValue) { return this.$flipH.set(newValue); }
+   });   
+
    Object.defineProperty(this, 'skin', {
       get() { return this.$skin.get(); },
       set(newValue) { return this.$skin.set(newValue); }
-    });   
+   });   
 
+   skins = skins === undefined ? source._skins : skins;
 
    if (Array.isArray(skins)) {
       skins.forEach(elem => {
@@ -223,8 +242,11 @@ function Sprite(x, y, w, h, skins, animate) {
       this._skins.push(skins);
    }
 
-   if(this._animate) {
-      animator.animate(this.$skin, new DiscreteAnimatedValue(this.$skin, 0, this._skins.length, 1.0));
+   // TODO: we do not have to run animation for sprites which are not in scene
+   if(this._animations !== undefined) {
+      this._animations.forEach(a => {
+         a(this);
+      })
    }
 }
 
@@ -266,13 +288,8 @@ Sprite.prototype.setXY = function(x, y) {
 }
 
 Sprite.prototype.clone = function(x, y) {
-   let sprite = new Sprite(x, y, this.w, this.h, this._skins, this._animate);
-   sprite.flipH = this.flipH;
+   let sprite = new Sprite({ source: this, x: x, y: y });
    return sprite;
-}
-
-Sprite.prototype.getSkinCount = function() {
-   return this._skins.length;
 }
 
 // DynamicImage is abstraction for atlas vs bitmap images
@@ -331,7 +348,7 @@ SpriteAtlas.prototype.createSprite = function(x, y) {
       this._spriteImageW,
       this._spriteImageH);
 
-   return new Sprite(0, 0, this._spriteW, this._spriteH, [spriteImage]);
+   return new Sprite({ x: 0, y: 0, w: this._spriteW, h: this._spriteH, skins: [spriteImage]});
 }
 
 SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
@@ -339,6 +356,7 @@ SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
       throw "has to be array";
    
    let spriteImages = [];
+   let animationSequence = [];
 
    for(let i = 0; i < Math.round(pos.length) / 2; i++) {
       spriteImages.push(new SpriteAtlasImage(
@@ -347,9 +365,13 @@ SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
          pos[i*2+1] * this._spriteImageH, 
          this._spriteImageW,
          this._spriteImageH));
+
+         animationSequence.push(i);
    }
 
-   let sprite = new Sprite(0, 0, this._spriteW, this._spriteH, spriteImages, true);
+   let animations = [ (sprite) => animator.animate(sprite.$skin, new DiscreteAnimatedValue(sprite.$skin, animationSequence, 1.0)) ];
+  
+   let sprite = new Sprite({ x: 0, y: 0, w: this._spriteW, h: this._spriteH, skins: spriteImages, animations: animations });
 
    return sprite;
 }

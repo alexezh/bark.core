@@ -29,11 +29,11 @@ function animationDemo() {
         }
 
         if(input.pressedKeys.ArrowUp) {
-            smile.glideByY(-20);
+            smile.$y.glide(-20, -2);
         } 
 
         if(input.pressedKeys.ArrowDown) {
-            smile.glideByY(20);
+            smile.$y.glide(20, 2);
         } 
     }
 }
