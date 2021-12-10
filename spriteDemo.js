@@ -20,9 +20,10 @@ function spriteDemo() {
       'CCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAAAA',
    ]);
 
-   let mickey = new Sprite({ x: 0 , y: 200, w: 32, h: 32, skins: ["./2.jpg"]});
-   screen.addSprite(mickey);
    screen.setMap(levelMap, { gridWidth: 20, blockWidth: 32, blockHeight: 32 });
+
+   let mickey = new Sprite({ w: 32, h: 32, skins: ["./2.jpg"]});
+   screen.addSprite(mickey, screen.getPixelPosByMapPos(5, 4));
 
    mickey.setTimer(1.0, () => {
    //   mickey.skin = (mickey.skin === 0) ? 1 : 0; 

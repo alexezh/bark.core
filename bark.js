@@ -215,8 +215,8 @@ function Sprite({ source, x, y, w, h, skins, animations }) {
    this._animations = animations === undefined && source !== undefined ? source._animations : animations;
 
    this.$flipH = new NumberProperty(false);
-   this.$x = new NumberProperty(x === undefined ? source.x : x);
-   this.$y = new NumberProperty(y === undefined ? source.y : y);
+   this.$x = new NumberProperty(x === undefined && source !== undefined ? source.x : x);
+   this.$y = new NumberProperty(y === undefined && source !== undefined ? source.y : y);
    this.$w = new NumberProperty(w === undefined ? source.w : w);
    this.$h = new NumberProperty(h === undefined ? source.h : h);
    this.$skin = new NumberProperty(0);
@@ -595,7 +595,8 @@ Screen.prototype._repaint = function() {
    window.requestAnimationFrame(() => self._repaint());
 }
 
-Screen.prototype.addSprite = function(sprite) {
+Screen.prototype.addSprite = function(sprite, {x, y}) {
+   sprite.setXY(x, y);
    this._sprites.push(sprite);
 }
 
