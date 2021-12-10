@@ -50,14 +50,15 @@ Game.prototype.updateScene = function() {
    return this.onUpdateScene();
 }
 
-// keeps track of animated property
-function LinearAnimatedValue(prop, delta, step) {
+// applies linear animation to a property
+// changes property by step until the total change is delta
+function LinearAnimator(prop, delta, step) {
    this.prop = prop;
    this.delta = delta;
    this.step = step;
 }
 
-LinearAnimatedValue.prototype.animate = function(frameTime) {
+LinearAnimator.prototype.animate = function(frameTime) {
    if(this.delta === 0) {
       return false;
    } else if(this.delta > 0) {
@@ -83,8 +84,31 @@ LinearAnimatedValue.prototype.animate = function(frameTime) {
    }
 }
 
+// applies linear animation to a property
+// changes property by step until the total change is delta
+function LoopLinearAnimator(prop, delta, step) {
+   this.prop = prop;
+   this.startDelta = Math.abs(delta);
+   this.delta = this.startDelta;
+   this.step = Math.abs(step);
+   this.direction = (delta > 0) ? 1 : -1;
+}
+
+LoopLinearAnimator.prototype.animate = function(frameTime) {
+   if(this.delta > this.step) {
+      this.delta -= this.step;
+      this.prop.add(this.step*this.direction);
+   } else {
+      this.prop.set(this.delta*this.direction);
+      this.delta = this.startDelta;
+      this.direction = -this.direction;
+   }
+
+   return true;
+}
+
 // goes through list of values in array
-function DiscreteAnimatedValue(prop, values, intervalSeconds) {
+function DiscreteAnimator(prop, values, intervalSeconds) {
    if(!Array.isArray(values)) {
       throw "Invalid argument type";
    }
@@ -96,7 +120,7 @@ function DiscreteAnimatedValue(prop, values, intervalSeconds) {
    this.prop.set(this.values[this.index]);
 }
 
-DiscreteAnimatedValue.prototype.animate = function(frameTime) {
+DiscreteAnimator.prototype.animate = function(frameTime) {
    if(this.lastFrameTime + this.intervalMs > frameTime)
       return true;
 
@@ -111,7 +135,7 @@ DiscreteAnimatedValue.prototype.animate = function(frameTime) {
    return true;
 } 
 
-// animate number properties at fixes interval
+// keeps track of animated properties
 function PropertyAnimationManager() {
    this._props = {};
    this._nextKey = 0;
@@ -126,7 +150,7 @@ PropertyAnimationManager.prototype.animateLinear = function(prop, delta, step) {
       return;
    }
 
-   this._props[prop.id] = new LinearAnimatedValue(prop, delta, step);
+   this._props[prop.id] = new LinearAnimator(prop, delta, step);
 }
 
 PropertyAnimationManager.prototype.animate = function(prop, animator) {
@@ -340,7 +364,7 @@ function SpriteAtlas(spriteImageW, spriteImageH, name, spriteW, spriteH) {
    this._spriteH = spriteH;
 }
 
-SpriteAtlas.prototype.createSprite = function(x, y) {
+SpriteAtlas.prototype.createSprite = function({x, y, animations}) {
    let spriteImage = new SpriteAtlasImage(
       this._image, 
       x * this._spriteImageW, 
@@ -348,7 +372,7 @@ SpriteAtlas.prototype.createSprite = function(x, y) {
       this._spriteImageW,
       this._spriteImageH);
 
-   return new Sprite({ x: 0, y: 0, w: this._spriteW, h: this._spriteH, skins: [spriteImage]});
+   return new Sprite({ x: 0, y: 0, w: this._spriteW, h: this._spriteH, skins: [spriteImage], animations});
 }
 
 SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
@@ -369,7 +393,7 @@ SpriteAtlas.prototype.createSpriteAnimated = function(pos, interval) {
          animationSequence.push(i);
    }
 
-   let animations = [ (sprite) => animator.animate(sprite.$skin, new DiscreteAnimatedValue(sprite.$skin, animationSequence, 1.0)) ];
+   let animations = [ (sprite) => animator.animate(sprite.$skin, new DiscreteAnimator(sprite.$skin, animationSequence, 1.0)) ];
   
    let sprite = new Sprite({ x: 0, y: 0, w: this._spriteW, h: this._spriteH, skins: spriteImages, animations: animations });
 
@@ -387,6 +411,10 @@ function LevelMap() {
 
 LevelMap.prototype.addSprite = function(c, sprite) {
    this._sprites[c] = sprite;
+}
+
+LevelMap.prototype.getSprite = function(c) {
+   return this._sprites[c];
 }
 
 LevelMap.prototype.mapSize = function() {
