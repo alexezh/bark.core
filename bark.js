@@ -454,16 +454,12 @@ LevelMap.prototype.draw = function(ctx, x, w, blockW, blockH) {
    });
 }
 
-LevelMap.prototype.getBlockByBlockPos = function(x, y) {
+LevelMap.prototype.getBlock = function(x, y) {
    let row = this._rows[blockPos.y];
    if(row === undefined)
       return null;
    return rows[blockPos.x];
 }
-
-//LevelMap.prototype.getBlockPosByPixelPos = function(x, y) {
-//   return { x: Math.round(x / this._blockW), y: Math.round(y / this._blockH) };
-//}
 
 LevelMap.prototype.setBlock = function(x, y, c) {
    let row = this._rows[y];
@@ -480,6 +476,10 @@ LevelMap.prototype.setBlock = function(x, y, c) {
    } else {
       row[x] = null;
    }
+}
+
+LevelMap.prototype.pixelSize = function(blockWidth, blockHeight) {
+   return { pixelWidth: blockWidth * this._rows[0].length, pixelHeight: blockHeight * this._rows.length };
 }
 
 function Screen() {
@@ -518,8 +518,8 @@ Screen.prototype.setMap = function(levelMap, { gridWidth, gridHeight, blockWidth
    }
 
    let mapSize = this._levelMap.mapSize();
-   let w = gridWidth === undefined ? mapSize.blockWidth : gridWidth;
-   let h = gridHeight === undefined ? mapSize.blockHeight : gridHeight;
+   gridWidth = gridWidth === undefined ? mapSize.gridWidth : gridWidth;
+   gridHeight = gridHeight === undefined ? mapSize.gridHeight : gridHeight;
 
    this._blockWidth = blockWidth;
    this._blockHeight = blockHeight;
@@ -594,13 +594,18 @@ Screen.prototype.blockSize = function() {
    return { blockWidth: this._blockWidth, blockHeight: this._blockHeight };
 }
 
-Screen.prototype.getBlockByPixelPos = function(x, y) {
-   let blockPos = this.getBlockByPixelPos(x, y);
-   this.getBlockByBlockPos(blockPos.x, blockPos.y);
+Screen.prototype.getMapPosByPixelPos = function(x, y) {
+   return { gridX: Math.round(x / this._blockWidth), gridY: Math.round(y / this._blockHeight) };
 }
 
-Screen.prototype.getPixelPosByBlockPos = function(x, y) {
-   return { x: x * this._blockW, y: y * this._blockH };
+// returns block code by position
+Screen.prototype.getBlockByPixelPos = function(x, y) {
+   let blockPos = this.getBlockByPixelPos(x, y);
+   this.getBlock(blockPos.x, blockPos.y);
+}
+
+Screen.prototype.getPixelPosByMapPos = function(x, y) {
+   return { x: x * this._blockWidth, y: y * this._blockHeight };
 }
 
 Screen.prototype.setCamera = function(x, y) {
@@ -621,8 +626,9 @@ Screen.prototype.setCamera = function(x, y) {
          }
       }
 
-      if(this._scrollX + shiftX > this._levelMap.pixelWidth() - this._width) {
-         shiftX = this._levelMap.pixelWidth() - this._width - this._scrollX;
+      let mapPixelSize = this._levelMap.pixelSize();
+      if(this._scrollX + shiftX > mapPixelSize.pixelWidth - this._width) {
+         shiftX = mapPixelSize.pixelWidth - this._width - this._scrollX;
       }
 
       if(shiftX !== 0) {

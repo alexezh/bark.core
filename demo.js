@@ -12,7 +12,7 @@ function drawSmile(ctx) {
 
 let smile = new Sprite(20, 100, 32, 32, new DynamicImage(drawSmile));
 screen.addSprite(smile);
-screen.setMap(levelMap, { gridWidth: 32, gridHeight: 32, blockWidth: 32, blockHeight: 32 });
+screen.setMap(levelMap, { gridWidth: 32, gridHeight: 6, blockWidth: 32, blockHeight: 32 });
 
 game.onUpdateScene = function () {
     if (input.pressedKeys.ArrowLeft) {

@@ -2,7 +2,7 @@
 // image is from
 // https://th.bing.com/th/id/R.5b0f575c42bd86b622fc9a0f8c0e03f6?rik=a4MuV9E59zvOGw&riu=http%3a%2f%2fwww.cis.upenn.edu%2f%7ecis460%2f16fa%2fhw%2fhwMM02%2fminecraft_textures_all_labeled.png&ehk=6hM%2b6OvSC7m7A6cw3%2b5kVaeDFlENHUu1jIQWXr0qBIk%3d&risl=&pid=ImgRaw&r=0
 let atlas = new SpriteAtlas(64, 64, './mineatlas.jpg', 32, 32);
-let levelMap = new LevelMap(32, 32);
+let levelMap = new LevelMap();
 levelMap.addSprite('A', atlas.createSprite(6, 2));
 levelMap.addSprite('B', atlas.createSprite(1, 0));
 levelMap.addSprite('C', atlas.createSprite(0, 0));
@@ -18,11 +18,9 @@ levelMap.loadMap([
    'CCCCCCCCCCCCCCCCCAAAAAAAAAAAAAAAAAAA',
 ]);
 
-let screen = new Screen();
-
 let mickey = new Sprite(0, 200, 32, 32, ["./2.jpg"]);
 screen.addSprite(mickey);
-screen.setMap(levelMap, { blockSize: 20 });
+screen.setMap(levelMap, { gridWidth: 20, blockWidth: 32, blockHeight: 32 });
 
 mickey.setTimer(1.0, () => {
 //   mickey.currentSkin = (mickey.currentSkin === 0) ? 1 : 0; 
@@ -59,11 +57,9 @@ game.onUpdateScene = function () {
    } 
    
    if(input.pressedKeys.Space) {
-      let blockPos = levelMap.getBlockPosByPixelPos(mickey.x, mickey.y);
-      levelMap.setBlock(blockPos.x + 1, blockPos.y, 'T');
+      let blockPos = screen.getMapPosByPixelPos(mickey.x, mickey.y);
+      levelMap.setBlock(blockPos.gridX + 1, blockPos.gridY, 'T');
    }
 
    screen.setCamera(mickey.x, mickey.y);
 }
-
-game.run(screen);

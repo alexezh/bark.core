@@ -69,13 +69,14 @@
     }
 </style>
     <script src="./bark.js"></script>
+    <script src="./my.js"></script>
     <script>
         function loadGame(gameFrame, code) {
             gameFrame.contentWindow.postMessage(code, '*');
         }
         function onRun() {
-            opStop();
-            
+            onStop();
+
             const gameFrameContainer = document.getElementById('gameFrameContainer');
             const codeArea = document.getElementById('codeArea');
             let text = codeArea.value;
@@ -97,7 +98,7 @@
         }
         function onStop() {
             const gameFrame = document.getElementById('gameFrame');
-            if( gameFrame !== undefined) {
+            if( gameFrame !== null) {
                 const gameFrameContainer = document.getElementById('gameFrameContainer');
                 gameFrameContainer.removeChild(gameFrame);
             }
@@ -125,7 +126,7 @@
 'screen.addSprite(smile);\r\n' +
 '\r\n' +
 '// set map with 32*32 pixels for every block\r\n' +
-'screen.setMap(levelMap, { gridWidth: 32, gridHeight: 32, blockWidth: 32, blockHeight: 32 });\r\n' +
+'screen.setMap(levelMap, { gridWidth: 32, gridHeight: 6, blockWidth: 32, blockHeight: 32 });\r\n' +
 '\r\n' +
 '// add function to handle keyboard\r\n' +
 'game.onUpdateScene = function () {\r\n' +
@@ -193,7 +194,7 @@
                 '<button type="button" onclick="onSave()">save</button>'+
             '</div>' +
             '<div class="textcontainer">'+
-                '<textarea class="textarea" id="codeArea" autocorrect="off" placeholder="Enter text"></textarea>'+
+                '<textarea class="textarea" id="codeArea" autocorrect="off" spellcheck="false" placeholder="Enter text"></textarea>'+
             '</div>'+
         '</div>'+
     '</div>'+
