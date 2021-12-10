@@ -74,6 +74,8 @@
             gameFrame.contentWindow.postMessage(code, '*');
         }
         function onRun() {
+            opStop();
+            
             const gameFrameContainer = document.getElementById('gameFrameContainer');
             const codeArea = document.getElementById('codeArea');
             let text = codeArea.value;
@@ -95,15 +97,17 @@
         }
         function onStop() {
             const gameFrame = document.getElementById('gameFrame');
-            const gameFrameContainer = document.getElementById('gameFrameContainer');
-            gameFrameContainer.removeChild(gameFrame);
+            if( gameFrame !== undefined) {
+                const gameFrameContainer = document.getElementById('gameFrameContainer');
+                gameFrameContainer.removeChild(gameFrame);
+            }
         }
         function loadExample() {
             let exampleCode = 
 '// this demo displays graphics based sprite and moves it on screen\r\n' +
 '// first, create an empty map of the level\r\n' +
-'let levelMap = new LevelMap(32, 32);\r\n' +
-'levelMap.createEmptyMap(32, 4);\r\n' +
+'let levelMap = new LevelMap();\r\n' +
+'levelMap.createEmptyMap(32, 6);\r\n' +
 '\r\n' +
 '// make a function for our sprite (can be bitmap)\r\n' +
 'function drawSmile(ctx) {\r\n' +
@@ -119,7 +123,9 @@
 '\r\n' +
 '// put things together\r\n' +
 'screen.addSprite(smile);\r\n' +
-'screen.setMap(levelMap, { blockWidth: 20 });\r\n' +
+'\r\n' +
+'// set map with 32*32 pixels for every block\r\n' +
+'screen.setMap(levelMap, { gridWidth: 32, gridHeight: 32, blockWidth: 32, blockHeight: 32 });\r\n' +
 '\r\n' +
 '// add function to handle keyboard\r\n' +
 'game.onUpdateScene = function () {\r\n' +
@@ -187,7 +193,7 @@
                 '<button type="button" onclick="onSave()">save</button>'+
             '</div>' +
             '<div class="textcontainer">'+
-                '<textarea class="textarea" id="codeArea" autocorrect="no" placeholder="Enter text"></textarea>'+
+                '<textarea class="textarea" id="codeArea" autocorrect="off" placeholder="Enter text"></textarea>'+
             '</div>'+
         '</div>'+
     '</div>'+

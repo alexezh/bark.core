@@ -50,130 +50,6 @@ Game.prototype.updateScene = function() {
    return this.onUpdateScene();
 }
 
-function Screen() {
-   this._width = undefined;
-   this._height = undefined;
-   this._sprites = [];
-   this._levelMap = null;
-   this._canvas = null;
-   this._scrollX = new NumberProperty();
-
-   Object.defineProperty(this, 'scrollX', {
-      get() {
-        return this._scrollX.get();
-      }
-    });   
-
-    Object.defineProperty(this, 'width', {
-      get() {
-        return this._width;
-      }
-    });   
-
-    Object.defineProperty(this, 'height', {
-      get() {
-        return this._height;
-      }
-    });   
-}
-
-Screen.prototype.setMap = function(levelMap, blockSize) {
-   this._levelMap = levelMap;
-
-   let mapSize = this._levelMap.mapSize();
-   let w = blockSize.blockWidth === undefined ? mapSize.blockWidth : blockSize.blockWidth;
-   let h = blockSize.blockHeight === undefined ? mapSize.blockHeight : blockSize.blockHeight;
-   
-   this._width = this._levelMap.blockWidth() * w;
-   this._height = this._levelMap.blockHeight() * h;
-}
-
-Screen.prototype.run = function(canvas) {
-   this._canvas = canvas;
-   canvas.width = this._width;
-   canvas.height = this._height;
-   this._cameraX = undefined;
-   this._cameraY = undefined;
-
-   let self = this;
-   window.requestAnimationFrame(() => self._repaint());
-}
-
-// repaint screen based on current scrolling position
-Screen.prototype._repaint = function() {
-   var ctx = this._canvas.getContext('2d');
-   let frameTime = performance.now();
-   ctx.save();
-   ctx.clearRect(0, 0, this._width, this._height);
-
-   ctx.translate(-this.scrollX, 0);
-
-   if (this._levelMap !== null) {
-      this._levelMap.draw(ctx, 0, this._width);
-   }
-
-   this._sprites.forEach(element => {
-      element.draw(ctx);
-   });
-   
-   ctx.restore();
-
-   let self = this;
-   window.requestAnimationFrame(() => self._repaint());
-}
-
-Screen.prototype.addSprite = function(sprite) {
-   this._sprites.push(sprite);
-}
-
-Screen.prototype.addAnimation = function(animation) {
-   this._animations.push(animation);
-}
-
-Screen.prototype.scrollByX = function(delta) {
-   this._scrollX.add(delta);
-}
-
-Screen.prototype.smoothScrollByX = function(delta) {
-   this._scrollX.glide(delta, delta / 10);
-}
-
-// returns relative position to the left side
-Screen.prototype.relativePosX = function(x) {
-   return x - this.scrollX;
-}
-
-Screen.prototype.setCamera = function(x, y) {
-
-   // ignore boundary if undefined
-   if(this._cameraX !== undefined) {
-      let shiftX = 0;
-
-      if(x > this._cameraX) {
-         if(this.relativePosX(x) > screen.width * 3 / 4) {
-            shiftX = this.width / 2;
-         }
-      }
-
-      if(x < this._cameraX) {
-         if(this.relativePosX(x) > this.width * 3 / 4) {
-            shiftX = -this.width / 2;
-         }
-      }
-
-      if(this._scrollX + shiftX > this._levelMap.pixelWidth() - this._width) {
-         shiftX = this._levelMap.pixelWidth() - this._width - this._scrollX;
-      }
-
-      if(shiftX !== 0) {
-         this.smoothScrollByX(shiftX);
-      }
-   }
-
-   this._cameraX = x;
-   this._cameraY = y;
-}
-
 // keeps track of animated property
 function LinearAnimatedValue(prop, delta, step) {
    this.prop = prop;
@@ -500,10 +376,8 @@ let PixelPos = { x: 0, y: 0};
 
 // LevelMap provides a way to render a map based on set of characters
 // each character references sprite registered with addSprite call
-function LevelMap(blockW, blockH) {
+function LevelMap() {
    this._sprites = {};
-   this._blockW = blockW;
-   this._blockH = blockH;
    this._rows = [];
 }
 
@@ -511,26 +385,8 @@ LevelMap.prototype.addSprite = function(c, sprite) {
    this._sprites[c] = sprite;
 }
 
-LevelMap.prototype.pixelWidth = function() {
-   return this._blockW * this._rows[0].length;
-}
-
-LevelMap.prototype.pixelHeight = function() {
-   return this._blockH * this._rows.length;
-}
-
-// width of single block
-LevelMap.prototype.blockWidth = function() {
-   return this._blockW;
-}
-
-// height of single block
-LevelMap.prototype.blockHeight = function() {
-   return this._blockH;
-}
-
 LevelMap.prototype.mapSize = function() {
-   return { blockWidth: this._rows.length, blockHeight: this._rows[0].length };
+   return { gridHeight: this._rows.length, gridWidth: this._rows[0].length };
 }
 
 // create empty map
@@ -566,27 +422,36 @@ LevelMap.prototype.loadMap = function(rows) {
    });
 }
 
+LevelMap.prototype.resetMap = function(blockWidth, blockHeight) {
+   let rowY = 0;
+   this._rows.forEach(row => {
+      for(let i = 0; i < row.length; i++) {
+         let sprite = row[i];
+         if(sprite !== null) {
+            sprite.setXY(i * blockWidth, rowY);
+         } 
+      };
+
+      rowY += blockHeight;
+   });
+}
+
 // draw map from position x, y with (w,h) size
-LevelMap.prototype.draw = function(ctx, x, w) {
-   let startX = x / this._blockW;
-   let startOffset = x % this._blockW;
-   let endX = startX + w / this._blockW + 1;
+LevelMap.prototype.draw = function(ctx, x, w, blockW, blockH) {
+   let startX = x / blockW;
+   let startOffset = x % blockW;
+   let endX = startX + w / blockW + 1;
    let currentY = 0;
    this._rows.forEach(row => {
       for(let i = startX; i < endX; i++) {
          let sprite = row[i];
-         if(sprite !== null) {
+         if(sprite !== undefined && sprite !== null) {
             sprite.draw(ctx);
          }
       }
 
-      currentY += this._blockH;
+      currentY += blockH;
    });
-}
-
-LevelMap.prototype.getBlockByPixelPos = function(x, y) {
-   let blockPos = this.getBlockByPixelPos(x, y);
-   this.getBlockByBlockPos(blockPos.x, blockPos.y);
 }
 
 LevelMap.prototype.getBlockByBlockPos = function(x, y) {
@@ -596,13 +461,9 @@ LevelMap.prototype.getBlockByBlockPos = function(x, y) {
    return rows[blockPos.x];
 }
 
-LevelMap.prototype.getPixelPosByBlockPos = function(x, y) {
-   return { x: x * this._blockW, y: y * this._blockH };
-}
-
-LevelMap.prototype.getBlockPosByPixelPos = function(x, y) {
-   return { x: Math.round(x / this._blockW), y: Math.round(y / this._blockH) };
-}
+//LevelMap.prototype.getBlockPosByPixelPos = function(x, y) {
+//   return { x: Math.round(x / this._blockW), y: Math.round(y / this._blockH) };
+//}
 
 LevelMap.prototype.setBlock = function(x, y, c) {
    let row = this._rows[y];
@@ -619,6 +480,158 @@ LevelMap.prototype.setBlock = function(x, y, c) {
    } else {
       row[x] = null;
    }
+}
+
+function Screen() {
+   this._width = undefined;
+   this._height = undefined;
+   this._sprites = [];
+   this._levelMap = null;
+   this._canvas = null;
+   this._scrollX = new NumberProperty();
+
+   Object.defineProperty(this, 'scrollX', {
+      get() {
+        return this._scrollX.get();
+      }
+    });   
+
+    Object.defineProperty(this, 'width', {
+      get() {
+        return this._width;
+      }
+    });   
+
+    Object.defineProperty(this, 'height', {
+      get() {
+        return this._height;
+      }
+    });   
+}
+
+// screen is a main object of the game
+Screen.prototype.setMap = function(levelMap, { gridWidth, gridHeight, blockWidth, blockHeight }) {
+   this._levelMap = levelMap;
+
+   if (blockWidth === undefined || blockHeight === undefined) {
+      throw "Missing required parameters";
+   }
+
+   let mapSize = this._levelMap.mapSize();
+   let w = gridWidth === undefined ? mapSize.blockWidth : gridWidth;
+   let h = gridHeight === undefined ? mapSize.blockHeight : gridHeight;
+
+   this._blockWidth = blockWidth;
+   this._blockHeight = blockHeight;
+   this._gridWidth = gridWidth;
+   this._gridHeight = gridHeight;
+   this._width = this._blockWidth * this._gridWidth;
+   this._height = this._blockHeight * this._gridHeight;
+
+   this._levelMap.resetMap(blockWidth, blockHeight);
+}
+
+Screen.prototype.run = function(canvas) {
+   this._canvas = canvas;
+   canvas.width = this._width;
+   canvas.height = this._height;
+   this._cameraX = undefined;
+   this._cameraY = undefined;
+
+   let self = this;
+   window.requestAnimationFrame(() => self._repaint());
+}
+
+// repaint screen based on current scrolling position
+Screen.prototype._repaint = function() {
+   var ctx = this._canvas.getContext('2d');
+   let frameTime = performance.now();
+   ctx.save();
+   ctx.clearRect(0, 0, this._width, this._height);
+
+   ctx.translate(-this.scrollX, 0);
+
+   if (this._levelMap !== null) {
+      this._levelMap.draw(ctx, 0, this._width, this._blockWidth, this._blockHeight);
+   }
+
+   this._sprites.forEach(element => {
+      element.draw(ctx);
+   });
+   
+   ctx.restore();
+
+   let self = this;
+   window.requestAnimationFrame(() => self._repaint());
+}
+
+Screen.prototype.addSprite = function(sprite) {
+   this._sprites.push(sprite);
+}
+
+Screen.prototype.addAnimation = function(animation) {
+   this._animations.push(animation);
+}
+
+Screen.prototype.scrollByX = function(delta) {
+   this._scrollX.add(delta);
+}
+
+Screen.prototype.smoothScrollByX = function(delta) {
+   this._scrollX.glide(delta, delta / 10);
+}
+
+// returns relative position to the left side
+Screen.prototype.relativePosX = function(x) {
+   return x - this.scrollX;
+}
+
+Screen.prototype.pixelSize = function() {
+   return { pixelWidth: this._blockWidth * this._rows[0].length, pixelHeight: this._blockHeight * this._rows.length };
+}
+
+Screen.prototype.blockSize = function() {
+   return { blockWidth: this._blockWidth, blockHeight: this._blockHeight };
+}
+
+Screen.prototype.getBlockByPixelPos = function(x, y) {
+   let blockPos = this.getBlockByPixelPos(x, y);
+   this.getBlockByBlockPos(blockPos.x, blockPos.y);
+}
+
+Screen.prototype.getPixelPosByBlockPos = function(x, y) {
+   return { x: x * this._blockW, y: y * this._blockH };
+}
+
+Screen.prototype.setCamera = function(x, y) {
+
+   // ignore boundary if undefined
+   if(this._cameraX !== undefined) {
+      let shiftX = 0;
+
+      if(x > this._cameraX) {
+         if(this.relativePosX(x) > screen.width * 3 / 4) {
+            shiftX = this.width / 2;
+         }
+      }
+
+      if(x < this._cameraX) {
+         if(this.relativePosX(x) > this.width * 3 / 4) {
+            shiftX = -this.width / 2;
+         }
+      }
+
+      if(this._scrollX + shiftX > this._levelMap.pixelWidth() - this._width) {
+         shiftX = this._levelMap.pixelWidth() - this._width - this._scrollX;
+      }
+
+      if(shiftX !== 0) {
+         this.smoothScrollByX(shiftX);
+      }
+   }
+
+   this._cameraX = x;
+   this._cameraY = y;
 }
 
 // globals used by rest of code
