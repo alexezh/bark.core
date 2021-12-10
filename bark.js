@@ -284,7 +284,7 @@ Sprite.prototype.draw = function(ctx) {
    if(this.flipH) {
       ctx.save();
       ctx.scale(-1, 1);
-      x = -x - this._w;
+      x = -x - this.w;
       restore = true;
    }
 
