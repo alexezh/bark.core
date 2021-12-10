@@ -23,40 +23,43 @@ function spriteDemo() {
    screen.setMap(levelMap, { gridWidth: 20, blockWidth: 32, blockHeight: 32 });
 
    let mickey = new Sprite({ w: 32, h: 32, skins: ["./2.jpg"]});
+   mickey.speedX = 0;
+   mickey.speedY = 0;
    screen.addSprite(mickey, screen.getPixelPosByMapPos(5, 4));
 
    mickey.setTimer(1.0, () => {
    //   mickey.skin = (mickey.skin === 0) ? 1 : 0; 
    });
 
-   let speedX = 0;
-
    function moveMickey() {
       if (input.pressedKeys.ArrowLeft) {
 
-         if(speedX > 0) speedX = 0;
-         speedX -= 1;
-         if(speedX < -4) speedX = -4;
+         if(mickey.speedX > 0) mickey.speedX = 0;
+         mickey.speedX -= 1;
+         if(mickey.speedX < -4) mickey.speedX = -4;
 
          mickey.flipH = true;
-         mickey.x += speedX;
+         mickey.x += mickey.speedX;
       } 
       
       if(input.pressedKeys.ArrowRight) {
-         if(speedX < 0) speedX = 0;
-         speedX += 1;
-         if(speedX > 4) speedX = 4;
+         if(mickey.speedX < 0) mickey.speedX = 0;
+            mickey.speedX += 1;
+         if(mickey.speedX > 4) mickey.speedX = 4;
 
-         mickey.x += speedX;
+         mickey.x += mickey.speedX;
          mickey.flipH = false;
       }
       
+      mickey.speedY = 0;
       if(input.pressedKeys.ArrowUp) {
          animator.glide({obj: mickey, prop: "y", delta: -20, step: -2});
+         mickey.speedY = -1;
       } 
       
       if(input.pressedKeys.ArrowDown) {
          mickey.y += 1;
+         mickey.speedY = 1;
       } 
    }
 
@@ -64,10 +67,12 @@ function spriteDemo() {
    animator.onUpdateScene = function () {
       moveMickey();
       
-      // see if mickey is falling
-      let below = screen.findTileBelow(mickey.left, mickey.bottom);
-      if(below !== null && mickey.bottom < below.top - 1) {
-         mickey.top += 1;
+      // see if mickey is falling. only fall if we are not moving up
+      if(mickey.speedY == 0) {
+         let below = screen.findTileBelow(mickey.left, mickey.bottom);
+         if(below !== null && mickey.bottom < below.top - 1) {
+            mickey.top += 2;
+         }
       }
 
       if(input.pressedKeys.Space) {

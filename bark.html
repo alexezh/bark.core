@@ -154,13 +154,28 @@
             codeArea.value = "spriteDemo();" // exampleCode;
         }
 
+        function loadFile(fileName) {
+            let reader = new FileReader();
+            reader.readAsText(fileName);
+            reader.onload = function() {
+                const codeArea = document.getElementById('codeArea');
+                codeArea.value = reader.result;
+            };
+        }
+
+        let projectName = "barkproject.js";
+
+        function onLoadFile(input) {
+            projectName = input.files[0].name;
+            loadFile(input.files[0]);
+        }
+
         function onSave() {
             var code = document.getElementById('codeArea').value;
             var codeBlob = new Blob([ codeBlob ], { type: 'text/plain' });
-            var fileName = "file.bark";
 
             var downloadLink = document.createElement("a");
-            downloadLink.download = fileName;
+            downloadLink.download = projectName;
             downloadLink.innerHTML = "Download File";
             if (window.webkitURL != null) {
                 // Chrome allows the link to be clicked without actually adding it to the DOM.
@@ -190,9 +205,10 @@
     '<div class="column right" height="100%">' +
         '<div class="editor">'+
             '<div>' +
+                '<button type="button" onclick="onSave()">save</button>'+
+                '<input type="file" onchange="onLoadFile(this)"></input>'+
                 '<button type="button" onclick="onRun()">run</button>'+
                 '<button type="button" onclick="onStop()">stop</button>'+
-                '<button type="button" onclick="onSave()">save</button>'+
             '</div>' +
             '<div class="textcontainer">'+
                 '<textarea class="textarea" id="codeArea" autocorrect="off" spellcheck="false" placeholder="Enter text"></textarea>'+
