@@ -20,12 +20,12 @@ function animationDemo() {
     game.onUpdateScene = function () {
         if (input.pressedKeys.ArrowLeft) {
             smile.flipH = true;
-            smile.changeX(-1);
+            smile.$x.add(-1);
         } 
 
         if(input.pressedKeys.ArrowRight) {
             smile.flipH = false;
-            smile.changeX(1);
+            smile.$x.add(1);
         }
 
         if(input.pressedKeys.ArrowUp) {

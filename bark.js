@@ -149,16 +149,16 @@ PropertyAnimationManager.prototype.processAnimation = function() {
    }
 }
 
-let animationManager = new PropertyAnimationManager();
+let animator = new PropertyAnimationManager();
 
 // number properties which can be animated
 function NumberProperty(value) {
    this._value = (value !== undefined) ? value : 0;
-   this.id = animationManager.nextPropId();
+   this.id = animator.nextPropId();
 }
 
 NumberProperty.prototype.glide = function(delta, step) {
-   animationManager.animateLinear(this, delta, step);
+   animator.animateLinear(this, delta, step);
 }
 
 NumberProperty.prototype.add = function(delta) {
@@ -175,34 +175,34 @@ NumberProperty.prototype.set = function(value) {
 
 // sprites
 function Sprite(x, y, w, h, skins, animate) {
-   this._x = new NumberProperty(x);
-   this._y = new NumberProperty(y);
-   this._w = w;
-   this._h = h;
    this._skins = [];
    this._animate = (animate !== undefined) ? animate : false;
-   this._currentSkin = new NumberProperty(0);
    this.flipH = false;
+   this.$x = new NumberProperty(x);
+   this.$y = new NumberProperty(y);
+   this.$w = new NumberProperty(w);
+   this.$h = new NumberProperty(h);
+   this.$skin = new NumberProperty(0);
 
    Object.defineProperty(this, 'x', {
-      get() {
-        return this._x.get();
-      }
+      get() { return this.$x.get(); }
    });   
 
    Object.defineProperty(this, 'y', {
-      get() {
-        return this._y.get();
-      }
+      get() { return this.$y.get(); }
    });   
  
-   Object.defineProperty(this, 'currentSkin', {
-      get() {
-         return this._currentSkin.get();
-      },
-      set(newValue) {
-        return this._currentSkin.set(newValue);
-      }
+   Object.defineProperty(this, 'w', {
+      get() { return this.$w.get(); }
+   });   
+
+   Object.defineProperty(this, 'h', {
+      get() { return this.$h.get(); }
+   });   
+
+   Object.defineProperty(this, 'skin', {
+      get() { return this.$skin.get(); },
+      set(newValue) { return this.$skin.set(newValue); }
     });   
 
 
@@ -224,12 +224,12 @@ function Sprite(x, y, w, h, skins, animate) {
    }
 
    if(this._animate) {
-      animationManager.animate(this._currentSkin, new DiscreteAnimatedValue(this._currentSkin, 0, this._skins.length, 1.0));
+      animator.animate(this.$skin, new DiscreteAnimatedValue(this.$skin, 0, this._skins.length, 1.0));
    }
 }
 
 Sprite.prototype.draw = function(ctx) {
-   if(this.currentSkin >= this._skins) {
+   if(this.skin >= this._skins.length) {
       throw "invalid skin index";
    }
 
@@ -240,10 +240,9 @@ Sprite.prototype.draw = function(ctx) {
       ctx.scale(-1, 1);
       x = -x - this._w;
       restore = true;
-
    }
 
-   this._skins[this.currentSkin].draw(ctx, x, this.y, this._w, this._h);
+   this._skins[this.skin].draw(ctx, x, this.y, this.w, this.h);
 
    if(restore) {
       ctx.restore();
@@ -262,29 +261,12 @@ Sprite.prototype.setTimer = function(timeout, func) {
 }
 
 Sprite.prototype.setXY = function(x, y) {
-   this._x.set(x);
-   this._y.set(y);
-}
-
-Sprite.prototype.changeX = function(x) {
-   this._x.add(x);
-}
-
-Sprite.prototype.changeY = function(y) {
-   this._y.add(y);
-}
-
-Sprite.prototype.changeXY = function(x, y) {
-   this._x.add(x);
-   this._y.add(y);
-}
-
-Sprite.prototype.glideByY = function(y) {
-   this._y.glide(y, y / 10);
+   this.$x.set(x);
+   this.$y.set(y);
 }
 
 Sprite.prototype.clone = function(x, y) {
-   let sprite = new Sprite(x, y, this._w, this._h, this._skins, this._animate);
+   let sprite = new Sprite(x, y, this.w, this.h, this._skins, this._animate);
    sprite.flipH = this.flipH;
    return sprite;
 }
@@ -488,12 +470,10 @@ function Screen() {
    this._sprites = [];
    this._levelMap = null;
    this._canvas = null;
-   this._scrollX = new NumberProperty();
+   this.$scrollX = new NumberProperty();
 
    Object.defineProperty(this, 'scrollX', {
-      get() {
-        return this._scrollX.get();
-      }
+      get() { return this.$scrollX.get(); }
     });   
 
     Object.defineProperty(this, 'width', {
@@ -573,14 +553,6 @@ Screen.prototype.addAnimation = function(animation) {
    this._animations.push(animation);
 }
 
-Screen.prototype.scrollByX = function(delta) {
-   this._scrollX.add(delta);
-}
-
-Screen.prototype.smoothScrollByX = function(delta) {
-   this._scrollX.glide(delta, delta / 10);
-}
-
 // returns relative position to the left side
 Screen.prototype.relativePosX = function(x) {
    return x - this.scrollX;
@@ -627,12 +599,12 @@ Screen.prototype.setCamera = function(x, y) {
       }
 
       let mapPixelSize = this._levelMap.pixelSize();
-      if(this._scrollX + shiftX > mapPixelSize.pixelWidth - this._width) {
-         shiftX = mapPixelSize.pixelWidth - this._width - this._scrollX;
+      if(this.$scrollX + shiftX > mapPixelSize.pixelWidth - this._width) {
+         shiftX = mapPixelSize.pixelWidth - this._width - this.$scrollX;
       }
 
       if(shiftX !== 0) {
-         this.smoothScrollByX(shiftX);
+         this.$scrollX.glide(shiftX, shiftX / 10);
       }
    }
 

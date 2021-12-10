@@ -36,7 +36,7 @@ function spriteDemo() {
          if(speedX < -4) speedX = -4;
 
          mickey.flipH = true;
-         mickey.changeX(speedX);
+         mickey.$x.add(speedX);
       } 
       
       if(input.pressedKeys.ArrowRight) {
@@ -44,16 +44,16 @@ function spriteDemo() {
          speedX += 1;
          if(speedX > 4) speedX = 4;
 
-         mickey.changeX(speedX);
+         mickey.$x.add(speedX);
          mickey.flipH = false;
       }
       
       if(input.pressedKeys.ArrowUp) {
-         mickey.glideByY(-20);
+         mickey.$y.glide(-20, -2);
       } 
       
       if(input.pressedKeys.ArrowDown) {
-         mickey.changeY(1);
+         mickey.$y.add(1);
       } 
       
       if(input.pressedKeys.Space) {
