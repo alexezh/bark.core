@@ -201,8 +201,7 @@
             if(window.self === window.top) {
                 var bodyContent = 
 '<div class="row">' +
-    '<div class="column left" hight="100%" id="gameFrameContainer"></div>' +
-    '<div class="column right" height="100%">' +
+    '<div class="column left" height="100%">' +
         '<div class="editor">'+
             '<div>' +
                 '<button type="button" onclick="onSave()">save</button>'+
@@ -215,6 +214,7 @@
             '</div>'+
         '</div>'+
     '</div>'+
+    '<div class="column right" hight="100%" id="gameFrameContainer"></div>' +
 '</div>';
                 const body = document.getElementById('body');
                 body.innerHTML = bodyContent;
