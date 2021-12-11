@@ -86,6 +86,44 @@ LinearAnimator.prototype.animate = function(frameTime) {
 
 // applies linear animation to a property
 // changes property by step until the total change is delta
+function LinearAnimator2(obj, prop, delta, step) {
+   if(obj === undefined || prop === undefined || delta === undefined || step === undefined)
+      throw "Required parameter missing";
+
+   this.obj = obj;
+   this.prop = prop;
+   this.delta = delta;
+   this.step = step;
+}
+
+LinearAnimator2.prototype.animate = function(frameTime) {
+   if(this.delta === 0) {
+      return false;
+   } else if(this.delta > 0) {
+      if(this.delta > this.step) {
+         this.delta -= this.step;
+         this.obj[this.prop] += this.step;
+         return true;
+      } else {
+         this.obj[this.prop] += this.delta;
+         this.delta = 0;
+         return false;
+      }
+   } else {
+      if(this.delta < this.step) {
+         this.delta -= this.step;
+         this.obj[this.prop] += this.step;
+         return true;
+      } else {
+         this.obj[this.prop] += this.delta;
+         this.delta = 0;
+         return false;
+      }
+   }
+}
+
+// applies linear animation to a property
+// changes property by step until the total change is delta
 function LoopLinearAnimator(prop, delta, step) {
    this.prop = prop;
    this.startDelta = Math.abs(delta);
@@ -138,6 +176,7 @@ DiscreteAnimator.prototype.animate = function(frameTime) {
 // keeps track of animated properties
 function PropertyAnimationManager() {
    this._props = {};
+   this._props2 = {};
    this._nextKey = 0;
 
    // run animation on 100 ms
@@ -164,7 +203,16 @@ PropertyAnimationManager.prototype.animate = function(prop, animator) {
    this._props[prop.id] = animator;
 }
 
-PropertyAnimationManager.prototype.nextPropId = function() {
+// animates property of an object. Object should have "id" property which used as a key
+PropertyAnimationManager.prototype.glide = function({obj, prop, delta, step}) {
+   this._props2[obj.id + prop] = new LinearAnimator2(obj, prop, delta, step);
+}
+
+PropertyAnimationManager.prototype.animateProperty = function({obj, prop, animator}) {
+   this._props2[obj.id + prop] = animator;
+}
+
+PropertyAnimationManager.prototype.nextId = function() {
    return this._nextKey++;
 }
 
@@ -176,6 +224,13 @@ PropertyAnimationManager.prototype.processAnimation = function() {
          delete this._props[key];
       }
    }
+
+   for(let key in this._props2) {
+      let prop = this._props2[key];
+      if(!prop.animate(frameTime)) {
+         delete this._props2[key];
+      }
+   }
 }
 
 let animator = new PropertyAnimationManager();
@@ -183,7 +238,7 @@ let animator = new PropertyAnimationManager();
 // number properties which can be animated
 function NumberProperty(value) {
    this._value = (value !== undefined) ? value : 0;
-   this.id = animator.nextPropId();
+   this.id = animator.nextId();
 }
 
 NumberProperty.prototype.glide = function(delta, step) {
@@ -214,27 +269,28 @@ function Sprite({ source, x, y, w, h, skins, animations }) {
    this._skins = [];
    this._animations = animations === undefined && source !== undefined ? source._animations : animations;
 
+   this.id = animator.nextId();
    this.$flipH = new NumberProperty(false);
-   this.$x = new NumberProperty(x === undefined && source !== undefined ? source.x : x);
-   this.$y = new NumberProperty(y === undefined && source !== undefined ? source.y : y);
-   this.$w = new NumberProperty(w === undefined ? source.w : w);
-   this.$h = new NumberProperty(h === undefined ? source.h : h);
+   this.x = x === undefined && source !== undefined ? source.x : x;
+   this.y = y === undefined && source !== undefined ? source.y : y;
+   this.w = w === undefined ? source.w : w;
+   this.h = h === undefined ? source.h : h;
    this.$skin = new NumberProperty(0);
 
-   Object.defineProperty(this, 'x', {
-      get() { return this.$x.get(); }
+   Object.defineProperty(this, 'top', {
+      get() { return this.y; }
    });   
 
-   Object.defineProperty(this, 'y', {
-      get() { return this.$y.get(); }
-   });   
- 
-   Object.defineProperty(this, 'w', {
-      get() { return this.$w.get(); }
+   Object.defineProperty(this, 'left', {
+      get() { return this.x; }
    });   
 
-   Object.defineProperty(this, 'h', {
-      get() { return this.$h.get(); }
+   Object.defineProperty(this, 'bottom', {
+      get() { return this.y + this.h; }
+   });   
+
+   Object.defineProperty(this, 'right', {
+      get() { return this.x + this.w; }
    });   
 
    Object.defineProperty(this, 'flipH', {
@@ -307,8 +363,8 @@ Sprite.prototype.setTimer = function(timeout, func) {
 }
 
 Sprite.prototype.setXY = function(x, y) {
-   this.$x.set(x);
-   this.$y.set(y);
+   this.x = x;
+   this.y = y;
 }
 
 Sprite.prototype.clone = function(x, y) {
