@@ -19,10 +19,6 @@ Input.prototype.onKeyUp = function(evt) {
 function Game() {
    this._screen = null;
    this._canvas = null;
-   this.onUpdateScene = null;
-
-   let self = this;
-   window.setInterval(() => self.updateScene(), 100);
 }
 
 // runs the game
@@ -40,14 +36,6 @@ Game.prototype.tryRun = function() {
    if(this._screen !== null && this._canvas !== null) {
       this._screen.run(this._canvas);
    }
-}
-
-Game.prototype.updateScene = function() {
-   if(this.onUpdateScene === null) {
-      return;
-   }
-
-   return this.onUpdateScene();
 }
 
 // applies linear animation to a property
@@ -178,6 +166,7 @@ function PropertyAnimationManager() {
    this._props = {};
    this._props2 = {};
    this._nextKey = 0;
+   this.onUpdateScene = null;
 
    // run animation on 100 ms
    let self = this;
@@ -231,6 +220,10 @@ PropertyAnimationManager.prototype.processAnimation = function() {
          delete this._props2[key];
       }
    }
+
+   if(this.onUpdateScene !== null) {
+      return this.onUpdateScene();
+   }
 }
 
 let animator = new PropertyAnimationManager();
@@ -270,7 +263,7 @@ function Sprite({ source, x, y, w, h, skins, animations }) {
    this._animations = animations === undefined && source !== undefined ? source._animations : animations;
 
    this.id = animator.nextId();
-   this.$flipH = new NumberProperty(false);
+   this.flipH = false;
    this.x = x === undefined && source !== undefined ? source.x : x;
    this.y = y === undefined && source !== undefined ? source.y : y;
    this.w = w === undefined ? source.w : w;
@@ -278,24 +271,23 @@ function Sprite({ source, x, y, w, h, skins, animations }) {
    this.$skin = new NumberProperty(0);
 
    Object.defineProperty(this, 'top', {
-      get() { return this.y; }
+      get() { return this.y; },
+      set(newValue) { return this.y = newValue; }
    });   
 
    Object.defineProperty(this, 'left', {
-      get() { return this.x; }
+      get() { return this.x; },
+      set(newValue) { return this.x = newValue; }
    });   
 
    Object.defineProperty(this, 'bottom', {
-      get() { return this.y + this.h; }
+      get() { return this.y + this.h; },
+      set(newValue) { return this.y = newValue - h; }
    });   
 
    Object.defineProperty(this, 'right', {
-      get() { return this.x + this.w; }
-   });   
-
-   Object.defineProperty(this, 'flipH', {
-      get() { return this.$flipH.get(); },
-      set(newValue) { return this.$flipH.set(newValue); }
+      get() { return this.x + this.w; },
+      set(newValue) { return this.x = newValue - w; }
    });   
 
    Object.defineProperty(this, 'skin', {
@@ -542,14 +534,14 @@ LevelMap.prototype.draw = function(ctx, x, w, blockW, blockH) {
    });
 }
 
-LevelMap.prototype.getBlock = function(x, y) {
-   let row = this._rows[blockPos.y];
+LevelMap.prototype.getTile = function(x, y) {
+   let row = this._rows[y];
    if(row === undefined)
       return null;
-   return rows[blockPos.x];
+   return row[x];
 }
 
-LevelMap.prototype.setBlock = function(x, y, c) {
+LevelMap.prototype.setTile = function(x, y, c) {
    let row = this._rows[y];
    if(row === undefined)
       return;
@@ -678,13 +670,29 @@ Screen.prototype.getMapPosByPixelPos = function(x, y) {
 }
 
 // returns block code by position
-Screen.prototype.getBlockByPixelPos = function(x, y) {
+Screen.prototype.getTileByPixelPos = function(x, y) {
    let blockPos = this.getBlockByPixelPos(x, y);
-   this.getBlock(blockPos.x, blockPos.y);
+   this.getTile(blockPos.x, blockPos.y);
 }
 
 Screen.prototype.getPixelPosByMapPos = function(x, y) {
    return { x: x * this._blockWidth, y: y * this._blockHeight };
+}
+
+// search down for the first tile we overlap
+// TODO: should take sprite
+Screen.prototype.lookDown = function(x, y) {
+   let mapPos = this.getMapPosByPixelPos(x, y);
+   let mapSize = this._levelMap.mapSize();
+
+   for(let i = mapPos.gridY + 1; i < mapSize.gridHeight; i++) {
+      let tile = this._levelMap.getTile(mapPos.gridX, i);
+      if(tile !== null) {
+         return tile;
+      }
+   }
+
+   return null;
 }
 
 Screen.prototype.setCamera = function(x, y) {
