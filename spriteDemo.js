@@ -33,24 +33,32 @@ function spriteDemo() {
 
    game.onUpdateScene = function () {
       if (input.pressedKeys.ArrowLeft) {
-
          if(speedX > 0) speedX = 0;
          speedX -= 1;
          if(speedX < -4) speedX = -4;
-
-         mickey.flipH = true;
-         mickey.$x.add(speedX);
+      }
+      else {
+         speedX = (speedX > 0) ? 0 : speedX;
       } 
       
       if(input.pressedKeys.ArrowRight) {
          if(speedX < 0) speedX = 0;
          speedX += 1;
          if(speedX > 4) speedX = 4;
+      } else {
+         speedX = (speedX < 0) ? 0 : speedX;
+      } 
 
+      if(speedX == 0) {
+         // nothing to do
+      } else if(speedX > 0) {
+         mickey.flipH = true;
+         mickey.$x.add(speedX);
+      } else {
          mickey.$x.add(speedX);
          mickey.flipH = false;
       }
-      
+
       if(input.pressedKeys.ArrowUp) {
          mickey.$y.glide(-20, -2);
       } 
@@ -59,6 +67,9 @@ function spriteDemo() {
          mickey.$y.add(1);
       } 
       
+      // check if we are standing
+      if(screen.)
+
       if(input.pressedKeys.Space) {
          let blockPos = screen.getMapPosByPixelPos(mickey.x, mickey.y);
          levelMap.setBlock(blockPos.gridX + 1, blockPos.gridY, 'T');
