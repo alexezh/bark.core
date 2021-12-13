@@ -1,18 +1,36 @@
 {
-    "version" : "3.0.3",
-    "compilerOptions" : {
-        "module" : "es2015",
-        "removeComments" : true,
-        "outDir": "./out",
-        "baseUrl" : "./",
-        "sourceMap" : true,
-        "alwaysStrict" : true,
-        "declaration" : true,
-    },
-    "include": [
-        "./**/*.ts"
+  "version": "3.0.3",
+  "compilerOptions": {
+    "target": "es5",
+    "module": "esnext",
+    "removeComments": true,
+    "outDir": "./out",
+    "baseUrl": "./",
+    "sourceMap": true,
+    "alwaysStrict": true,
+    "declaration": true,
+    "skipLibCheck": true,
+    "types": [],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
     ],
-    "exclude": [
-        "./out.d.ts"
-    ]
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "noEmit": true,
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "./out.d.ts",
+    "./node_modules/*"
+  ]
 }
