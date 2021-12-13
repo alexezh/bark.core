@@ -140,7 +140,7 @@ export class TileLevel implements ILevel {
   }
 
   public getGridPosByPixelPos(x: number, y: number) {
-    return { gridX: Math.round(x / this._tileW), gridY: Math.round(y / this._tileH) };
+    return new Pos( PosKind.Grid, Math.round(x / this._tileW), Math.round(y / this._tileH));
   }
 
   // returns block code by position
@@ -150,7 +150,7 @@ export class TileLevel implements ILevel {
   }
 
   public getPixelPosByGridPos(x: number, y: number) {
-    return { x: x * this._gridW, y: y * this._gridH };
+    return new Pos( PosKind.Pixel, x * this._gridW, y * this._gridH );
   }
 
   // search down for the first tile we overlap
@@ -159,7 +159,7 @@ export class TileLevel implements ILevel {
     let mapPos = this.getGridPosByPixelPos(x, y);
 
     for (let i = this._gridH + 1; i < this._gridH; i++) {
-      let tile = this.getTile(mapPos.gridX, i);
+      let tile = this.getTile(mapPos.x, i);
       if (tile !== null) {
         return tile;
       }
