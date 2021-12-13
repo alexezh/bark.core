@@ -6,12 +6,28 @@ export interface ILevel {
   readonly pixelHeight: number;
 }
 
+export enum PosKind {
+  Pixel,
+  Grid
+}
+
+export class Pos {
+  public kind: PosKind;
+  public x: number;
+  public y: number;
+
+  constructor(kind: PosKind, x: number, y: number) {
+    this.kind = kind;
+    this.x = x;
+    this.y = y;
+  }
+}
 // TileLevel provides a way to render a map based on set of characters
 // each character references sprite registered with addSprite call
 export class TileLevel implements ILevel {
-  private _tileSprites: { [key: string]: Sprite };
+  private _tileSprites: { [key: string]: Sprite } = {};
   private _rows: any[] = [];
-  private _sprites: Sprite[];
+  private _sprites: Sprite[] = [];
   private _tileW: number;
   private _tileH: number;
   private _gridW: number;
@@ -29,21 +45,22 @@ export class TileLevel implements ILevel {
     this._gridH = args.gridH;
   }
 
-  public addTileSprite(c, sprite) {
-    this._sprites[c] = sprite;
+  // registers tile sprite for string "c"
+  public addTileSprite(c: string, sprite: Sprite) {
+    this._tileSprites[c] = sprite;
   }
 
-  public getTileSprite(c) {
-    return this._sprites[c];
+  public getTileSprite(c: string) {
+    return this._tileSprites[c];
   }
 
-  public addSprite(sprite, { x, y }) {
+  public addSprite(sprite: Sprite, x: number, y: number) {
     sprite.setXY(x, y);
     this._sprites.push(sprite);
   }
 
   // create empty map
-  public createEmptyMap(w, h) {
+  public createEmptyMap(w: number, h: number) {
     for (let i = 0; i < h; i++) {
       let row = [];
       for (let j = 0; j < w; j++) {
@@ -55,7 +72,7 @@ export class TileLevel implements ILevel {
 
   // load map as row of strings
   // each char corresponds to sprite registered with createSprite call
-  public loadMap(rows) {
+  public loadMap(rows: any[]) {
     let rowY = 0;
     rows.forEach(inputRow => {
       let spriteRow = [];
@@ -76,10 +93,10 @@ export class TileLevel implements ILevel {
   }
 
   // draw map from position x, y with (w,h) size
-  public draw(ctx, x, w) {
+  public draw(ctx: any, x: number, y: number) {
     let startX = x / this._tileW;
     let startOffset = x % this._tileW;
-    let endX = startX + w / this._tileW + 1;
+    let endX = startX + this.pixelWidth / this._tileW + 1;
     let currentY = 0;
     this._rows.forEach(row => {
       for (let i = startX; i < endX; i++) {
@@ -97,14 +114,15 @@ export class TileLevel implements ILevel {
     });
   }
 
-  public getTile(x, y) {
+  // return tile by position
+  public getTile(x: number, y: number) {
     let row = this._rows[y];
     if (row === undefined)
       return null;
     return row[x];
   }
 
-  public setTile(x, y, c) {
+  public setTile(x: number, y: number, c: string) {
     let row = this._rows[y];
     if (row === undefined)
       return;
@@ -121,27 +139,23 @@ export class TileLevel implements ILevel {
     }
   }
 
-  public pixelSize(blockWidth, blockHeight) {
-    return { pixelWidth: blockWidth * this._rows[0].length, pixelHeight: blockHeight * this._rows.length };
-  }
-
-  public getGridPosByPixelPos(x, y) {
+  public getGridPosByPixelPos(x: number, y: number) {
     return { gridX: Math.round(x / this._tileW), gridY: Math.round(y / this._tileH) };
   }
 
   // returns block code by position
-  public getTileByPixelPos(x, y): Sprite {
+  public getTileByPixelPos(x: number, y: number): Sprite {
     let blockPos = this.getGridPosByPixelPos(x, y);
     return this.getTile(x, y);
   }
 
-  public getPixelPosByGridPos(x, y) {
+  public getPixelPosByGridPos(x: number, y: number) {
     return { x: x * this._gridW, y: y * this._gridH };
   }
 
   // search down for the first tile we overlap
   // TODO: should take sprite
-  public lookDown(x, y) {
+  public lookDown(x: number, y: number) {
     let mapPos = this.getGridPosByPixelPos(x, y);
 
     for (let i = this._gridH + 1; i < this._gridH; i++) {
