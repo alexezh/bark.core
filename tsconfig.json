@@ -24,7 +24,7 @@
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "noEmit": true,
+    "noEmit": false,
   },
   "include": [
     "src/**/*.ts"

@@ -3,6 +3,7 @@ const path = require('path');
 //const MergeIntoSingleFilePlugin = require('webpack-merge-and-include-globally');
 
 module.exports = {
+    mode: 'development',
     entry: './src/game.ts',
     module: {
       rules: [
