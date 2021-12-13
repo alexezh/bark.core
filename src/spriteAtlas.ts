@@ -10,7 +10,7 @@ export class SpriteAtlasImage implements ISpriteSource {
   private _h: number;
   private _image: any;
 
-  constructor(atlas, x, y, w, h) {
+  constructor(atlas: any, x: number, y: number, w: number, h: number) {
     this._image = atlas;
     this._x = x;
     this._y = y;
@@ -32,7 +32,7 @@ export class SpriteAtlas {
   private _spriteW: number;
   private _spriteH: number;
 
-  public constructor(spriteImageW, spriteImageH, name, spriteW, spriteH) {
+  public constructor(spriteImageW: number, spriteImageH: number, name: string, spriteW: number, spriteH: number) {
     this._image = new Image();
     this._image.src = name;
     this._spriteImageW = spriteImageW;
@@ -41,7 +41,7 @@ export class SpriteAtlas {
     this._spriteH = spriteH;
   }
 
-  public createSprite({ x, y, animations }): Sprite {
+  public createSprite(x: number, y: number, animations: any[]): Sprite {
     let spriteImage = new SpriteAtlasImage(
       this._image,
       x * this._spriteImageW,
@@ -52,7 +52,7 @@ export class SpriteAtlas {
     return new Sprite({ x: 0, y: 0, w: this._spriteW, h: this._spriteH, skins: [spriteImage], animations });
   }
 
-  public createSpriteAnimated = function (pos, interval) {
+  public createSpriteAnimated(pos: number, interval: number) {
     if (!Array.isArray(pos))
       throw "has to be array";
 
@@ -70,7 +70,7 @@ export class SpriteAtlas {
       animationSequence.push(i);
     }
 
-    let animations = [(sprite) => animator.animate(sprite.skin, new DiscreteAnimator(sprite.$skin, animationSequence, 1.0))];
+    let animations: any[] = []; // [(sprite: Sprite) => animator.animate(sprite.skin, new DiscreteAnimator(sprite.skin, animationSequence, 1.0))];
 
     let sprite = new Sprite({ x: 0, y: 0, w: this._spriteW, h: this._spriteH, skins: spriteImages, animations: animations });
 

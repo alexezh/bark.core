@@ -3,6 +3,26 @@ const path = require('path');
 //const MergeIntoSingleFilePlugin = require('webpack-merge-and-include-globally');
 
 module.exports = {
+    entry: './src/game.ts',
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: ['.tsx', '.ts', '.js'],
+    },
+    output: {
+      filename: 'bundle.js',
+      path: path.resolve(__dirname, 'dist'),
+    },
+  };
+
+  /*
     entry: {
       'bundle.js': [
         path.resolve(__dirname, 'out/game.js'),
@@ -15,6 +35,7 @@ module.exports = {
     },
     module: {
       rules: [
+        */
         /*
         // somehow the following expose-loader declaration doesn't work
         // https://github.com/webpack-contrib/expose-loader/issues/51
@@ -25,11 +46,9 @@ module.exports = {
               options: '$'
           }]
         }
-         */
-      ],
     }
 }
-
+*/
 //    entry: {
 //        "bundle.js": glob.sync("main.*.?js").map(f => path.resolve(__dirname, f)),
 //    },

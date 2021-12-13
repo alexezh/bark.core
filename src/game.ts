@@ -2,7 +2,7 @@ import { Input } from "./input";
 import { Screen } from "./screen";
 
 export class Game {
-  private _screen: Screen = null;
+  private _screen: Screen|null = null;
   private _canvas: any = null;
 
   // runs the game
@@ -11,7 +11,7 @@ export class Game {
     this.tryRun();
   }
 
-  public loadCanvas(canvas) {
+  public loadCanvas(canvas: any) {
     this._canvas = canvas;
     this.tryRun();
   }
@@ -27,8 +27,8 @@ export class Game {
 export var game = new Game();
 export var screen = new Screen();
 export var input = new Input();
-let gameCode = null;
-let isGameLoaded = false;
+let gameCode:string = '';
+let isGameLoaded:boolean = false;
 
 window.addEventListener("message", (event) => {
   gameCode = event.data;
@@ -45,7 +45,7 @@ export function tryLoadGameCode() {
 }
 
 // called when canvas is loaded
-export function loadGameFrame(body) {
+export function loadGameFrame(body: any) {
   body.innerHtml = '<canvas id="canvas"></canvas>'
   var canvas = document.createElement('canvas');
   canvas.id = 'canvas';

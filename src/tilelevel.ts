@@ -130,7 +130,7 @@ export class TileLevel implements ILevel {
     if (x >= row.length)
       return;
 
-    let sprite = this._sprites[c];
+    let sprite = this._tileSprites[c];
     if (sprite !== undefined) {
       sprite = sprite.clone(x * this._tileW, y * this._tileH);
       row[x] = sprite;

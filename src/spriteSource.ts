@@ -23,7 +23,7 @@ export class SpriteImage implements ISpriteSource {
     this._h = h;
   }
 
-  public draw(ctx, x, y, w, h): void {
+  public draw(ctx: any, x: number, y: number, w: number, h: number): void {
     ctx.drawImage(this._image, x, y, w, h);
   }
 }
@@ -36,7 +36,7 @@ export class DynamicImage implements ISpriteSource {
     this._drawFunc = func;
   }
 
-  public draw(ctx, x, y, w, h): void {
+  public draw(ctx: any, x: number, y: number, w: number, h: number): void {
     ctx.save();
     ctx.translate(x, y);
     this._drawFunc(ctx);

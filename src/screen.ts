@@ -2,23 +2,23 @@ import { NumberProperty } from "./animator";
 import { ILevel } from "./tilelevel";
 
 export class Screen {
-  private _width = undefined;
-  private _height = undefined;
+  private _width:number = 0;
+  private _height:number = 0;
   private _level: ILevel | null = null;
-  private _canvas = null;
+  private _canvas: any = null;
   private _cameraX: number | undefined = 0;
   private _cameraY: number | undefined = 0;
   private $scrollX = new NumberProperty(0);
 
   public get scrollX() { return this.$scrollX.get(); }
-
   public get width() { return this._width; }
-
   public get height() { return this._height; }
 
   // screen is a main object of the game
   public setLevel(level: ILevel, width: number, height: number) {
     this._level = level;
+    this._width = width;
+    this._height = height;
   }
 
   public run(canvas: any) {
@@ -57,6 +57,9 @@ export class Screen {
   }
 
   public setCamera(x: number, y: number) {
+    if (this._level === null) {
+      return;
+    }
 
     // ignore boundary if undefined
     if (this._cameraX !== undefined) {

@@ -8,11 +8,11 @@ export class NumberProperty {
     this.id = animator.nextId();
   }
 
-  public glide(delta, step) {
+  public glide(delta: number, step: number) {
     animator.animateLinear(this, delta, step);
   }
 
-  public add(delta) {
+  public add(delta: number) {
     this._value = this._value + delta;
   }
 
@@ -20,7 +20,7 @@ export class NumberProperty {
     return this._value;
   }
 
-  public set(value) {
+  public set(value: number) {
     this._value = value;
   }
 }
@@ -32,13 +32,13 @@ export class LinearAnimator {
   public delta: number;
   public step: number;
 
-  constructor(prop, delta, step) {
+  constructor(prop: NumberProperty, delta: number, step: number) {
     this.prop = prop;
     this.delta = delta;
     this.step = step;
   }
 
-  public animate(frameTime) {
+  public animate(frameTime: number) {
     if (this.delta === 0) {
       return false;
     } else if (this.delta > 0) {
@@ -68,7 +68,7 @@ export class LinearAnimator {
 // applies linear animation to a property
 // changes property by step until the total change is delta
 export class LinearAnimator2 {
-  public obj: object;
+  public obj: any;
   public prop: string;
   public delta: number;
   public step: number;
@@ -80,7 +80,7 @@ export class LinearAnimator2 {
     this.step = step;
   }
 
-  public animate(frameTime) {
+  public animate(frameTime: number) {
     if (this.delta === 0) {
       return false;
     } else if (this.delta > 0) {
@@ -116,7 +116,7 @@ export class LoopLinearAnimator {
   public step: number;
   public direction: number;
 
-  constructor(prop, delta, step) {
+  constructor(prop: NumberProperty, delta: number, step: number) {
     this.prop = prop;
     this.startDelta = Math.abs(delta);
     this.delta = this.startDelta;
@@ -124,7 +124,7 @@ export class LoopLinearAnimator {
     this.direction = (delta > 0) ? 1 : -1;
   }
 
-  public animate(frameTime) {
+  public animate(frameTime: number) {
     if (this.delta > this.step) {
       this.delta -= this.step;
       this.prop.add(this.step * this.direction);
@@ -155,8 +155,8 @@ export class DiscreteAnimator {
     this.prop.set(this.values[this.index]);
   }
 
-  public animate = function (frameTime) {
-    if (this.lastFrameTime + this.intervalMs > frameTime)
+  public animate(frameTime: number) {
+    if (this.lastFrameTimeMs + this.intervalMs > frameTime)
       return true;
 
     let newIndex = this.index + 1;
@@ -165,7 +165,7 @@ export class DiscreteAnimator {
 
     this.index = newIndex;
     this.prop.set(this.values[newIndex]);
-    this.lastFrameTime = frameTime;
+    this.lastFrameTimeMs = frameTime;
 
     return true;
   }
@@ -173,8 +173,8 @@ export class DiscreteAnimator {
 
 // keeps track of animated properties
 export class PropertyAnimationManager {
-  private _props: {};
-  private _props2: {};
+  private _props: {[key: number]: any};
+  private _props2: {[key: string]: any};
   private _nextKey: number;
   private onUpdateScene: any;
 
@@ -189,7 +189,7 @@ export class PropertyAnimationManager {
     window.setInterval(() => self.processAnimation(), 100);
   }
 
-  public animateLinear(prop, delta, step) {
+  public animateLinear(prop: NumberProperty, delta: number, step: number) {
     if (this._props[prop.id] !== undefined) {
       return;
     }
@@ -197,7 +197,7 @@ export class PropertyAnimationManager {
     this._props[prop.id] = new LinearAnimator(prop, delta, step);
   }
 
-  public animate(prop, animator) {
+  public animate(prop: NumberProperty, animator: any) {
     if (prop === undefined || animator == undefined)
       throw "missing required args";
 
@@ -209,12 +209,12 @@ export class PropertyAnimationManager {
   }
 
   // animates property of an object. Object should have "id" property which used as a key
-  public glide({ obj, prop, delta, step }) {
-    this._props2[obj.id + prop] = new LinearAnimator2(obj, prop, delta, step);
+  public glide(args: { obj: any, prop: string, delta: number, step: number }) {
+    this._props2[args.obj.id + args.prop] = new LinearAnimator2(args.obj, args.prop, args.delta, args.step);
   }
 
-  public animateProperty({ obj, prop, animator }) {
-    this._props2[obj.id + prop] = animator;
+  public animateProperty(args: { obj: any, prop: string, animator: any }) {
+    this._props2[args.obj.id + args.prop] = args.animator;
   }
 
   public nextId(): number {

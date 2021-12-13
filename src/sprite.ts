@@ -2,7 +2,7 @@ import { animator } from './animator';
 import { ISpriteSource, SpriteImage } from './spriteSource';
 
 export class Sprite {
-  private _skins: any;
+  private _skins: any = [];
   private _animations: any[];
   private id: number;
   private flipH: boolean;
@@ -10,7 +10,7 @@ export class Sprite {
   private y: number;
   private w: number;
   private h: number;
-  private skin;
+  public skin: number = 0;
 
   public get top() { return this.y; }
   public set top(newValue) { this.y = newValue; }
@@ -43,26 +43,25 @@ export class Sprite {
     animations?: any[]
   }) {
     this.id = animator.nextId();
-    this._skins = [];
-    this._animations = args.animations === undefined && args.source !== undefined ? args.source._animations : args.animations;
+    this._animations = ((args.animations === undefined && args.source !== undefined) ? args.source._animations : args.animations) as any[];
 
     this.id = animator.nextId();
     this.flipH = false;
-    this.x = args.x === undefined && args.source !== undefined ? args.source.x : args.x;
-    this.y = args.y === undefined && args.source !== undefined ? args.source.y : args.y;
-    this.w = args.w === undefined ? args.source.w : args.w;
-    this.h = args.h === undefined ? args.source.h : args.h;
+    this.x = (args.x === undefined && args.source !== undefined ? args.source.x : args.x) as number;
+    this.y = (args.y === undefined && args.source !== undefined ? args.source.y : args.y) as number;
+    this.w = (args.w === undefined && args.source !== undefined ? args.source.w : args.w) as number;
+    this.h = (args.h === undefined && args.source !== undefined ? args.source.h : args.h) as number;
 
-    args.skins = args.skins === undefined ? args.source._skins : args.skins;
+    args.skins = (args.skins === undefined && args.source !== undefined) ? args.source._skins : args.skins;
 
-    this.initSkins(args.skins, args.w, args.h);
+    this.initSkins(args.skins);
   }
 
-  private initSkins(skins: any[], w: number, h: number) {
+  private initSkins(skins?: any[]) {
     if (Array.isArray(skins)) {
       skins.forEach(elem => {
         if (typeof (elem) == 'string') {
-          this._skins.push(new SpriteImage(elem, w, h));
+          this._skins.push(new SpriteImage(elem, this.w, this.h));
         } else {
           // assume that it is something which can draw
           this._skins.push(elem);
@@ -70,7 +69,7 @@ export class Sprite {
       });
     }
     else if (typeof (skins) === 'string') {
-      this._skins.push(new SpriteImage(skins as string, w, h));
+      this._skins.push(new SpriteImage(skins as string, this.w, this.h));
     } else {
       // assume that it is something which can draw
       this._skins.push(skins);
@@ -106,7 +105,7 @@ export class Sprite {
   }
 
   // executes timer in seconds
-  public setTimer(timeout, func) {
+  public setTimer(timeout: number, func: any) {
     if (typeof (timeout) != 'number')
       throw 'pass timeout as parameter';
 
@@ -121,7 +120,7 @@ export class Sprite {
     this.y = y;
   }
 
-  public clone = function (x: number, y: number): Sprite {
+  public clone(x: number, y: number): Sprite {
     let sprite = new Sprite({ source: this, x: x, y: y });
     return sprite;
   }
