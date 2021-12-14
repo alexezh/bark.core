@@ -1,10 +1,10 @@
 {
   "version": "3.0.3",
   "compilerOptions": {
+    "outFile": "dist/bark.js",
     "target": "es5",
-    "module": "esnext",
+    "module": "amd",
     "removeComments": true,
-    "outDir": "./out",
     "baseUrl": "./src",
     "sourceMap": true,
     "alwaysStrict": true,
@@ -23,7 +23,6 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true,
     "noEmit": false,
   },
   "include": [
