@@ -5,7 +5,7 @@
     "module": "esnext",
     "removeComments": true,
     "outDir": "./out",
-    "baseUrl": "./",
+    "baseUrl": "./src",
     "sourceMap": true,
     "alwaysStrict": true,
     "declaration": true,

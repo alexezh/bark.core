@@ -1,6 +1,7 @@
 const path = require('path');
 //const glob = require("glob")
 //const MergeIntoSingleFilePlugin = require('webpack-merge-and-include-globally');
+//const MergeIntoSingleFilePlugin = require('webpack-merge-and-include-globally');
 
 module.exports = {
     mode: 'development',
