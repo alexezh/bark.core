@@ -9,16 +9,39 @@ namespace bark {
   export var input = new Input();
   export var project: { [id: string]: any } = {};
 
-  export function processEvent(event: any) {
-    
+  function loadCodeBlock(name: string, code: string) {
+
+  }
+
+  function processOp(op: any) {
+    if (op.kind === 'update') {
+      project[op.id] = op.data;
+      console.log('process ' + op.target);
+      if (op.target === 'CodeBlock') {
+        loadCodeBlock(op.name, op.code);
+      }
+    } else if (op.op == 'remove') {
+      delete project[op.id];
+    }
+  }
+
+  function processEvent(opsJson: string) {
+    try {
+      let ops = JSON.parse(opsJson);
+      ops.forEach((x: any) => processOp(x));
+    }
+    catch (error) {
+      console.log('cannot parse ops')
+      throw (error);
+    }
   }
 
   /**
    * called when game is loaded
    */
-  export function loadGameFrame(canvas: any) {
+  export function onLoadFrame(canvas: any) {
     window.addEventListener("message", (event) => {
-      processEvent(event);
+      processEvent(event.data);
     }, false);
 
     game.loadCanvas(canvas);
