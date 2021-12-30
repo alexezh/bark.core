@@ -2,38 +2,44 @@
 /// <reference path="tilelevel.ts" />
 
 namespace bark {
-  //  import { NumberProperty } from "./animator";
-  //  import { ILevel } from "./tilelevel";
-
   export class Screen {
     private _width: number = 0;
     private _height: number = 0;
     private _level: ILevel | null = null;
     private _canvas: any = null;
-    private _cameraX: number | undefined = 0;
-    private _cameraY: number | undefined = 0;
-    private $scrollX = new NumberProperty(0);
+    private _cameraX: number = 0;
+    private _cameraY: number = 0;
+    private _scrollX: number = 0;
+    private _editMode: boolean = true;
 
-    public get scrollX() { return this.$scrollX.get(); }
+    public get scrollX() { return this._scrollX; }
     public get width() { return this._width; }
     public get height() { return this._height; }
 
     // screen is a main object of the game
-    public setLevel(level: ILevel, width: number, height: number) {
+    public setLevel(level: ILevel) {
       this._level = level;
-      this._width = width;
-      this._height = height;
     }
 
-    public run(canvas: any) {
+    public setCanvas(canvas: any) {
       this._canvas = canvas;
       canvas.width = this._width;
       canvas.height = this._height;
-      this._cameraX = undefined;
-      this._cameraY = undefined;
+      this._cameraX = 0;
+      this._cameraY = 0;
 
       let self = this;
       window.requestAnimationFrame(() => self._repaint());
+    }
+
+    public setEditMode(edit: boolean) {
+      this._editMode = edit;
+      this._level?.setEditMode(edit);
+    }
+
+    public resize(screenWidth: number, screenHeight: number) {
+      this._canvas.width = screenWidth;
+      this._canvas.height = screenHeight;
     }
 
     // repaint screen based on current scrolling position
@@ -86,7 +92,8 @@ namespace bark {
         }
 
         if (shiftX !== 0) {
-          this.$scrollX.glide(shiftX, shiftX / 10);
+          //this.$scrollX.glide(shiftX, shiftX / 10);
+          this._scrollX -= shiftX;
         }
       }
 

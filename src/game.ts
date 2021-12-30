@@ -18,9 +18,9 @@ namespace bark {
     }
 
     private tryRun() {
-      if (this._screen !== null && this._canvas !== null) {
-        this._screen.run(this._canvas);
-      }
+      //      if (this._screen !== null && this._canvas !== null) {
+      //        this._screen.run(this._canvas);
+      //      }
     }
   }
 }

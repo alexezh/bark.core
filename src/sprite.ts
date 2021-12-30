@@ -5,6 +5,16 @@
 /// <reference path="spriteSource.ts" />
 
 namespace bark {
+  export class SpriteDef {
+
+  }
+
+  export class SpriteDefCollection {
+    createSprite(id: string): Sprite {
+      return new Sprite();
+    }
+  }
+
   export class Sprite {
     private _skins: any = [];
     private _animations: any[];
