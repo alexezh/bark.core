@@ -21,16 +21,16 @@ export class StorageOp {
 }
 
 export interface IProjectStorage {
-  updateSnapshot(json: string);
-  setItem(id: string, value: any);
-  removeItem(id: string);
+  updateSnapshot(json: string): void;
+  setItem(id: string, value: any): void;
+  removeItem(id: string): void;
   /**
    * treats items as array of values
    */
-  appendItem(id: string, value: any);
+  appendItem(id: string, value: any): void;
 
-  registerOnChange(func: (op: StorageOp[]) => void);
-  unregisterOnChange(func: (op: StorageOp[]) => void);
+  registerOnChange(func: (op: StorageOp[]) => void): void;
+  unregisterOnChange(func: (op: StorageOp[]) => void): void;
   toJson(): string;
 }
 
