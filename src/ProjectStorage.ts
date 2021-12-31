@@ -20,22 +20,36 @@ export class StorageOp {
   }
 }
 
+export interface IStorageOpReceiver {
+  processOp(op: any): void;
+}
+
 export interface IProjectStorage {
   updateSnapshot(json: string): void;
   setItem(id: string, value: any): void;
   removeItem(id: string): void;
+
   /**
    * treats items as array of values
    */
   appendItem(id: string, value: any): void;
 
+  processRemoteOp(op: StorageOp): void;
+
   registerOnChange(func: (op: StorageOp[]) => void): void;
   unregisterOnChange(func: (op: StorageOp[]) => void): void;
+
+  /**
+   * register receiver for processing of remote ops
+   */
+  registerReceiver(id: string, receiver: IStorageOpReceiver): void;
+
   toJson(): string;
 }
 
 export class ProjectLocalStorage implements IProjectStorage {
   private _data: { [key: string]: any } = {};
+  private _receivers: { [key: string]: WeakRef<IStorageOpReceiver> } = {}
   private _onChange: AsyncEventSource<(costume: StorageOp[]) => void> = new AsyncEventSource<(costume: StorageOp[]) => void>();
   private _changeQueue: StorageOp[] = [];
   private _updatePending: boolean = false;
@@ -66,6 +80,40 @@ export class ProjectLocalStorage implements IProjectStorage {
 
     item.push(value);
     this.queueChange(new StorageOp(StorageOpKind.append, id, value));
+  }
+
+  public processRemoteOp(op: StorageOp) {
+    switch (op.kind) {
+      case StorageOpKind.set:
+        this.processSetOp(op);
+        break;
+      case StorageOpKind.append:
+        break;
+      case StorageOpKind.remove:
+        delete this._data[op.id];
+        break;
+    }
+  }
+
+  /**
+   * creates new or updates existing item
+   */
+  private processSetOp(op: StorageOp) {
+    let weakReceiver = this._receivers[op.id];
+
+    // if we do not have object, try to create one in parent
+    if (weakReceiver === undefined) {
+      
+      return;
+    }
+
+    let receiver = weakReceiver.deref();
+    if (!receiver) {
+      console.log('received released: ' + op.id);
+      return;
+    }
+
+    receiver.processOp(op.value);
   }
 
   private queueChange(op: StorageOp) {
@@ -102,6 +150,10 @@ export class ProjectLocalStorage implements IProjectStorage {
 
   public unregisterOnChange(func: (op: StorageOp[]) => void) {
     this._onChange.remove(func);
+  }
+
+  public registerReceiver(id: string, receiver: IStorageOpReceiver): void {
+    this._receivers[id] = new WeakRef<IStorageOpReceiver>(receiver);
   }
 
   public toJson(): string {

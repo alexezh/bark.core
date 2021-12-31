@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { x64Hash64 } from './hash/murmurhash3';
 import AsyncEventSource from './AsyncEventSource';
-import { IProjectStorage, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
+import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
 
 export interface IObjectDef {
   get path(): string;
@@ -27,7 +27,7 @@ export class ObjectDef implements IObjectDef {
   }
 }
 
-export class CodeBlockDef extends ObjectDef {
+export class CodeBlockDef extends ObjectDef implements IStorageOpReceiver {
   public name: string;
   public code: string;
   public codeId: string;
@@ -37,6 +37,7 @@ export class CodeBlockDef extends ObjectDef {
     this.name = name;
     this.code = code;
     this.codeId = x64Hash64(code);
+    storage.registerReceiver(this.path, this);
     storage.setItem(this.path, this.createUpdateOp());
   }
 
@@ -45,6 +46,12 @@ export class CodeBlockDef extends ObjectDef {
     this.codeId = x64Hash64(code);
 
     this._storage.setItem(this.path, this.createUpdateOp());
+  }
+
+  public processOp(op: any): void {
+    this.name = op.name;
+    this.code = op.code;
+    this.codeId = op.codeId;
   }
 
   private createUpdateOp() {
@@ -236,8 +243,8 @@ export class TileLevelDef extends ObjectDef {
     tileHeight: number;
   }
 
-  public constructor(storage: IProjectStorage, gridWidth: number, gridHeight: number) {
-    super(storage, undefined)
+  public constructor(storage: IProjectStorage, parent: IObjectDef, gridWidth: number, gridHeight: number) {
+    super(storage, parent)
     this.codeFile = new CodeFileDef(storage, this, 'level');
     this.props = {
       gridWidth: gridWidth,
@@ -314,27 +321,27 @@ export class TileLevelDef extends ObjectDef {
   }
 }
 
-/**
- * ATT: all methods should be static. We will deserialize JS into this class without casting
- */
-export class ProjectDef {
+export class ScreenDef extends ObjectDef {
   /**
    * collection of all sprites in a game
    */
   public sprites: SpriteDef[] = [];
+  // @ts-ignore
   public level: TileLevelDef;
+  // @ts-ignore
   public codeFile: CodeFileDef;
   public props: {
     screenWidth: number,
     screenHeight: number,
   };
-  private _storage: IProjectStorage;
 
   public constructor(
     storage: IProjectStorage,
-    level: TileLevelDef,
+    parent: IObjectDef,
     screenWidth: number,
     screenHeight: number) {
+
+    super(storage, undefined);
 
     this._storage = storage;
     this.props = {
@@ -342,19 +349,6 @@ export class ProjectDef {
       screenHeight: screenHeight
     }
     storage.setItem('project', this.createUpdateOp());
-
-    this.level = level;
-    this.codeFile = new CodeFileDef(this._storage, undefined, 'game');
-
-    // create a default sprite
-    this.sprites.push(new SpriteDef(storage, undefined, 'Leia'));
-    this.sprites.push(new SpriteDef(storage, undefined, 'Floor'));
-    this.sprites.push(new SpriteDef(storage, undefined, 'Air'));
-
-    this.level.setTiles([
-      { sprite: this.sprites[0], x: 0, y: 0 },
-      { sprite: this.sprites[0], x: 1, y: 0 },
-      { sprite: this.sprites[0], x: 2, y: 0 }]);
   }
 
   public setSize(screenWidth: number, screenHeight: number) {
@@ -383,12 +377,13 @@ export class ProjectDef {
  * utility method for managing project
  */
 export class Project {
-  public readonly def: ProjectDef;
+  public readonly def: ScreenDef;
   public readonly _storage: ProjectLocalStorage;
+  public readonly onChange: AsyncEventSource<() => void> = new AsyncEventSource<() => void>();
 
   public get storage(): IProjectStorage { return this._storage; }
 
-  public constructor(storage: ProjectLocalStorage, def: ProjectDef) {
+  public constructor(storage: ProjectLocalStorage, def: ScreenDef) {
     this._storage = storage;
     this.def = def;
   }
@@ -397,11 +392,13 @@ export class Project {
     let storage = new ProjectLocalStorage();
 
     let level = new TileLevelDef(storage, 48, 8);
-    let def = new ProjectDef(
+    let def = new ScreenDef(
       storage,
       level,
       level.props.tileWidth * 20,
       level.props.tileHeight * 8);
+
+    // @ts-ignore
 
     def.codeFile.createBlock('updateScene', '// put code to update scene here');
 
