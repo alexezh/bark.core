@@ -1,8 +1,8 @@
 {
-  "name": "barkcore",
+  "name": "bark-core",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index",
+  "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "dependencies": {
     "ts-loader": "^9.2.6",
@@ -38,6 +38,7 @@
     "dts-webpack-bundler": "^1.0.3",
     "prettier": "2.5.1",
     "types-webpack-bundler": "^1.0.2",
+    "typescript-declaration-webpack-plugin": "^0.2.2",
     "uuid": "^8.3.2",
     "webpack-plugin-serve": "^1.5.0"
   }

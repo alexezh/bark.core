@@ -2,7 +2,7 @@
   "version": "3.0.3",
   "compilerOptions": {
     "target": "es5",
-    "module": "es6",
+    "module": "commonjs",
     "removeComments": true,
     "baseUrl": "./src",
     "outDir": "./out",

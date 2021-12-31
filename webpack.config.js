@@ -1,9 +1,10 @@
-var DeclarationBundlerPlugin = require('types-webpack-bundler');
+//var DeclarationBundlerPlugin = require('types-webpack-bundler');
+const TypescriptDeclarationPlugin = require('typescript-declaration-webpack-plugin');
 const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: './src/game.ts',
+  entry: './src/index.ts',
   devtool: 'inline-source-map',
   module: {
     rules: [
@@ -22,9 +23,8 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
   },
   plugins: [
-    new DeclarationBundlerPlugin({
-      moduleName: 'barkcore',
-      out: './index.d.ts',
+    new TypescriptDeclarationPlugin({
+      out: `index.d.ts`,
     })
   ]
 };
