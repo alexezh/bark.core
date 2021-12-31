@@ -1,11 +1,11 @@
 {
   "version": "3.0.3",
   "compilerOptions": {
-    "outFile": "dist/bark.js",
     "target": "es5",
-    "module": "amd",
+    "module": "es6",
     "removeComments": true,
     "baseUrl": "./src",
+    "outDir": "./out",
     "sourceMap": true,
     "alwaysStrict": true,
     "declaration": true,

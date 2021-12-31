@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { x64Hash64 } from './hash/murmurhash3';
 import AsyncEventSource from './AsyncEventSource';
-import { IProjectStorage, ProjectLocalStorage, StorageOp, StorageOpKind } from './ProjectStorage';
+import { IProjectStorage, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
 
 export interface IObjectDef {
   get path(): string;

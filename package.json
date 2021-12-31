@@ -1,7 +1,9 @@
 {
-  "name": "bark-core",
+  "name": "barkcore",
   "version": "0.1.0",
   "private": true,
+  "main": "dist/index",
+  "typings": "dist/index.d.ts",
   "dependencies": {
     "ts-loader": "^9.2.6",
     "typescript": "^4.5.3",
@@ -10,8 +12,8 @@
     "webpack-merge-and-include-globally": "^2.3.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "tsc",
+    "watch": "webpack --watch",
+    "build": "webpack",
     "prettier": "npx prettier src test --check",
     "prettier:fix": "npm run prettier -- --write"
   },
@@ -27,8 +29,16 @@
       "last 1 safari version"
     ]
   },
+  "files": [
+    "dist/index.ts"
+  ],
   "devDependencies": {
+    "@types/uuid": "^8.3.3",
+    "declaration-bundler-webpack-plugin": "^1.0.3",
+    "dts-webpack-bundler": "^1.0.3",
     "prettier": "2.5.1",
+    "types-webpack-bundler": "^1.0.2",
+    "uuid": "^8.3.2",
     "webpack-plugin-serve": "^1.5.0"
   }
 }
