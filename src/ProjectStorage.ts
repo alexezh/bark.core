@@ -107,8 +107,6 @@ export class ProjectLocalStorage implements IProjectStorage {
 
     // if we do not have object, try to create one in parent
     if (!weakReceiver) {
-      console.log('ProjectLocalStorage: no receiver for id:' + op.id);
-
       if (op.parent === undefined) {
         throw 'ProjectLocalStorage: op.parent undefined';
       }
@@ -132,7 +130,6 @@ export class ProjectLocalStorage implements IProjectStorage {
         return;
       }
 
-      console.log('process for id:' + op.id);
       receiver.processSet(op.value);
     }
   }
@@ -159,10 +156,8 @@ export class ProjectLocalStorage implements IProjectStorage {
 
   public registerOnChange(func: (op: StorageOp[]) => void) {
     // send current state to sink
-    let ops: any[] = [];
-    for (let id in this._data) {
-      ops.push(new StorageOp(StorageOpKind.set, id, this._data[id].value));
-    }
+    let ops = this.makePopulateList();
+
     func(ops);
 
     // register to receive notifications
@@ -186,9 +181,10 @@ export class ProjectLocalStorage implements IProjectStorage {
       return;
     }
 
+    let data = this._data[id];
     if (data.parent !== undefined) {
       if (!writtenOps.has(data.parent)) {
-        this.makePopulateOp(data.parent, this._data[data.parent], ops, writtenOps);
+        this.makePopulateOp(data.parent, ops, writtenOps);
       }
     }
 
@@ -196,6 +192,9 @@ export class ProjectLocalStorage implements IProjectStorage {
     writtenOps.add(id);
   }
 
+  /** generates list of ops in dependency order
+   * ops without dependencies go first
+   */
   private makePopulateList(): any[] {
     let ops: any[] = [];
     let writtenOps: Set<string> = new Set<string>();
@@ -206,14 +205,8 @@ export class ProjectLocalStorage implements IProjectStorage {
   }
 
   public toJson(): string {
-    // make sure to insert parent ops before child ops
-    // to do this, keep map of all items when we pushed and make sure that we pushed parent
-    let ops: any[] = [];
-    let writtenOps: { [key: string]: any } = {}
+    let ops = this.makePopulateList();
 
-    for (let id in this._data) {
-      ops.push(new StorageOp(StorageOpKind.set, id, this._data[id]));
-    }
     return JSON.stringify(ops);
   }
 }

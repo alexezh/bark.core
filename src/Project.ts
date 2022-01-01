@@ -18,6 +18,7 @@ export class ObjectDef implements IObjectDef {
     parent: IObjectDef | undefined,
     id: string | undefined = undefined) {
     this.id = (id) ? id : uuidv4();
+    console.log('ObjectRef: ' + this.id);
     this.parent = parent;
     this._storage = storage;
   }
@@ -49,7 +50,10 @@ export class CodeBlockDef extends ObjectDef implements IStorageOpReceiver {
     this.code = code;
     this.codeId = (codeId) ? codeId : x64Hash64(code);
     storage.registerReceiver(this.id, this);
-    storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
+
+    if (id === undefined) {
+      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
+    }
   }
 
   public updateCode(code: string) {
@@ -96,7 +100,11 @@ export class CodeFileDef extends ObjectDef implements IStorageOpReceiver {
 
     super(storage, parent, id);
     this.name = (name) ? name : 'No name';
-    storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
+
+    storage.registerReceiver(this.id, this);
+    if (id === undefined) {
+      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
+    }
   }
 
   public createBlock(name: string, code: string) {
@@ -168,7 +176,9 @@ export class CostumeDef extends ObjectDef implements IStorageOpReceiver {
 
     super(storage, parent, id);
     storage.registerReceiver(this.id, this);
-    storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
+    if (id === undefined) {
+      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
+    }
   }
 
   public updateImage(imageData: ImageData) {
@@ -216,6 +226,7 @@ export class SpriteDef extends ObjectDef implements IStorageOpReceiver {
   public name: string = 'No name';
   public width: number = 0;
   public height: number = 0;
+  // @ts-ignore
   public codeFile: CodeFileDef;
   public costumes: CostumeDef[] = [];
 
@@ -232,13 +243,13 @@ export class SpriteDef extends ObjectDef implements IStorageOpReceiver {
 
     super(storage, parent, id);
     this.name = name;
-    this.codeFile = new CodeFileDef(storage, this, undefined, name);
 
     storage.registerReceiver(this.id, this);
-    storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
 
     // add one costume by default
-    if (!id) {
+    if (id === undefined) {
+      this.codeFile = new CodeFileDef(storage, this, undefined, name);
+      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
       this.costumes.push(new CostumeDef(storage, this, undefined));
     }
   }
@@ -335,7 +346,7 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     this.props = props
 
     this._storage.registerReceiver(this.id, this);
-    if (!id) {
+    if (id === undefined) {
       this._storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
       this.codeFile = new CodeFileDef(storage, this, undefined);
       this.updateTiles();
@@ -380,7 +391,7 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
       updateTiles.push(spriteDef);
     });
 
-    this._storage.appendItem('tiles', updateTiles);
+    this._storage.appendItem('tiles', this.parent?.id, updateTiles);
 
     tiles.forEach(tile => {
       let row: any[] = this.rows[tile.y];
@@ -466,11 +477,11 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
   }
 
   public processSet(op: any): void {
-    console.log('props :' + op.props);
     this.props = op.props;
   }
 
   public processAdd(childId: string, op: any): void {
+    console.log('processAdd:' + op.target);
     if (op.target === 'Sprite') {
       this.sprites.push(SpriteDef.fromOp(this._storage, this, childId, op));
     } else if (op.target === 'TileLevel') {
@@ -481,7 +492,6 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
   }
 
   private createUpdateOp() {
-    console.log('props :' + this.props);
     return {
       target: 'Project',
       props: this.props,
