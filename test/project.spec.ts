@@ -15,7 +15,7 @@ describe('project tests', function () {
       ops.forEach(op => storage2.processRemoteOp(op));
     });
 
-    assert(screen2.level.rows.length === prj1.def.level.rows.length);
-    assert(screen2.sprites.length === prj1.def.sprites.length);
+    assert(screen2.level.rows.length === prj1.screen.level.rows.length);
+    assert(screen2.sprites.length === prj1.screen.sprites.length);
   });
 })

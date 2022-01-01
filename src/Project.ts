@@ -588,7 +588,7 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
  * utility method for managing project
  */
 export class Project {
-  public readonly def: ScreenDef;
+  public readonly screen: ScreenDef;
   public readonly _storage: ProjectLocalStorage;
   public readonly onChange: AsyncEventSource<() => void> = new AsyncEventSource<() => void>();
 
@@ -596,7 +596,7 @@ export class Project {
 
   public constructor(storage: ProjectLocalStorage, def: ScreenDef) {
     this._storage = storage;
-    this.def = def;
+    this.screen = def;
   }
 
   public static createEmptyProject(): Project {
@@ -635,31 +635,31 @@ export class Project {
   }
 
   public forEachSprite(func: (file: SpriteDef) => void) {
-    this.def.sprites.forEach((x: SpriteDef) => func(x));
+    this.screen.sprites.forEach((x: SpriteDef) => func(x));
   }
 
   public forEachCodeFile(func: (file: CodeFileDef) => void) {
-    func(this.def.codeFile);
-    if (this.def.level !== undefined) {
-      func(this.def.level?.codeFile);
+    func(this.screen.codeFile);
+    if (this.screen.level !== undefined) {
+      func(this.screen.level?.codeFile);
     }
-    this.def.sprites.forEach((x: SpriteDef) => func(x.codeFile));
+    this.screen.sprites.forEach((x: SpriteDef) => func(x.codeFile));
   }
 
   public findCodeFileById(id: string): CodeFileDef | undefined {
-    if (this.def.codeFile.id === id) {
-      return this.def.codeFile;
+    if (this.screen.codeFile.id === id) {
+      return this.screen.codeFile;
     }
 
-    if (this.def.level !== undefined && this.def.level.codeFile.id === id) {
-      return this.def.level.codeFile;
+    if (this.screen.level !== undefined && this.screen.level.codeFile.id === id) {
+      return this.screen.level.codeFile;
     }
 
-    return this.def.sprites.find((x: SpriteDef) => x.codeFile.id === id)?.codeFile;
+    return this.screen.sprites.find((x: SpriteDef) => x.codeFile.id === id)?.codeFile;
   }
 
   public findSpriteById(id: string): SpriteDef | undefined {
-    return this.def.sprites.getById(id);
+    return this.screen.sprites.getById(id);
   }
 }
 
