@@ -1,8 +1,8 @@
 import AsyncEventSource from './AsyncEventSource'
-import { CodeFileDef } from './codeFileDef';
-import { ObjectDef, IObjectDef } from './objectDef';
-import { CostumeDef } from './costumeDef';
-import { IProjectStorage, IStorageOpReceiver } from './projectStorage';
+import { CodeFileDef } from './CodeFileDef';
+import { ObjectDef, IObjectDef } from './ObjectDef';
+import { CostumeDef } from './CostumeDef';
+import { IProjectStorage, IStorageOpReceiver } from './ProjectStorage';
 import { Sprite } from './Sprite';
 import { ISpriteSource } from './SpriteSource';
 

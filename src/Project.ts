@@ -1,7 +1,7 @@
 import AsyncEventSource from './AsyncEventSource';
-import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
-import { ObjectDef, IObjectDef } from './objectDef';
-import { CodeFileDef } from './codeFileDef';
+import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './ProjectStorage';
+import { ObjectDef, IObjectDef } from './ObjectDef';
+import { CodeFileDef } from './CodeFileDef';
 import { SpriteDef, SpriteDefCollection } from './SpriteDef';
 import { TileLevelDef, TileLevelProps } from './TileLevelDef';
 

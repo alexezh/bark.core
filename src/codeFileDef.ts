@@ -1,6 +1,6 @@
 import { x64Hash64 } from "./hash/murmurhash3";
-import { IObjectDef, ObjectDef } from "./objectDef";
-import { IProjectStorage, IStorageOpReceiver } from "./projectStorage";
+import { IObjectDef, ObjectDef } from "./ObjectDef";
+import { IProjectStorage, IStorageOpReceiver } from "./ProjectStorage";
 
 export class CodeBlockDef extends ObjectDef implements IStorageOpReceiver {
   public name: string;

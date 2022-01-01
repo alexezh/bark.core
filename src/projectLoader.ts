@@ -1,4 +1,4 @@
-import { Project, ScreenDef } from "project";
+import { Project, ScreenDef } from "Project";
 import { Screen } from "screen";
 
 /** intermediary between def and project */
