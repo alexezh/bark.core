@@ -16,20 +16,14 @@ export class ObjectDef implements IObjectDef {
   public constructor(
     storage: IProjectStorage,
     parent: IObjectDef | undefined,
-    id: string | undefined = undefined) {
+    id: string | undefined = undefined,
+    tag: string | undefined = undefined) {
+
     this.id = (id) ? id : uuidv4();
-    console.log('ObjectRef: ' + this.id);
+    // console.log('ObjectRef: ' + this.id + ' ' + tag);
     this.parent = parent;
     this._storage = storage;
   }
-  /*
-    public get path(): string {
-      if (this.parent !== undefined) {
-        return this.parent.path + '!' + this.id;
-      } else {
-        return this.id;
-      }
-    }*/
 }
 
 export class CodeBlockDef extends ObjectDef implements IStorageOpReceiver {
@@ -45,7 +39,7 @@ export class CodeBlockDef extends ObjectDef implements IStorageOpReceiver {
     code: string,
     codeId: string | undefined = undefined) {
 
-    super(storage, parent, id);
+    super(storage, parent, id, 'CodeBlock');
     this.name = name;
     this.code = code;
     this.codeId = (codeId) ? codeId : x64Hash64(code);
@@ -98,7 +92,7 @@ export class CodeFileDef extends ObjectDef implements IStorageOpReceiver {
     id: string | undefined,
     name: string | undefined = undefined) {
 
-    super(storage, parent, id);
+    super(storage, parent, id, 'CodeFile');
     this.name = (name) ? name : 'No name';
 
     storage.registerReceiver(this.id, this);
@@ -174,7 +168,7 @@ export class CostumeDef extends ObjectDef implements IStorageOpReceiver {
     parent: IObjectDef,
     id: string | undefined) {
 
-    super(storage, parent, id);
+    super(storage, parent, id, 'Costume');
     storage.registerReceiver(this.id, this);
     if (id === undefined) {
       storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
@@ -241,7 +235,7 @@ export class SpriteDef extends ObjectDef implements IStorageOpReceiver {
     id: string | undefined,
     name: string) {
 
-    super(storage, parent, id);
+    super(storage, parent, id, 'Sprite');
     this.name = name;
 
     storage.registerReceiver(this.id, this);
@@ -329,21 +323,27 @@ export type TileLevelProps = {
  * ATT: all methods should be static. We will deserialize JS into this class without casting
  */
 export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
-  public cells: any[] = [];
   // @ts-ignore
   public codeFile: CodeFileDef;
+  /** rows contains array of SpriteDef */
   public rows: any[] = [];
   public props: TileLevelProps;
+  private _tilesId: string;
+  private _sprites: SpriteDefCollection;
 
   public constructor(
     storage: IProjectStorage,
     parent: IObjectDef,
     id: string | undefined,
-    props: TileLevelProps | undefined) {
+    props: TileLevelProps | undefined,
+    sprites: SpriteDefCollection) {
 
-    super(storage, parent)
+    super(storage, parent, id, 'TileLevel')
+    this._tilesId = this.id + '.tiles';
+
     // @ts-ignore
     this.props = props
+    this._sprites = sprites;
 
     this._storage.registerReceiver(this.id, this);
     if (id === undefined) {
@@ -353,8 +353,13 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     }
   }
 
-  public static fromOp(storage: IProjectStorage, parent: IObjectDef, id: string, op: any): TileLevelDef {
-    let level = new TileLevelDef(storage, parent, id, op.props);
+  public static fromOp(
+    storage: IProjectStorage,
+    parent: IObjectDef, id: string,
+    sprites: SpriteDefCollection,
+    op: any): TileLevelDef {
+
+    let level = new TileLevelDef(storage, parent, id, op.props, sprites);
     level.processSet(op);
     return level;
   }
@@ -365,7 +370,15 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
   }
 
   public processAdd(childId: string, op: any): void {
-    this.codeFile = CodeFileDef.fromOp(this._storage, this, childId, op);
+    if (childId === this._tilesId) {
+      let tileOps = op as any[];
+      tileOps.forEach(spriteDef => {
+        let row = this.rows[spriteDef.y];
+        row[spriteDef.x] = this._sprites.getById(spriteDef.id)
+      });
+    } else {
+      this.codeFile = CodeFileDef.fromOp(this._storage, this, childId, op);
+    }
   }
 
   private createUpdateOp() {
@@ -391,7 +404,8 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
       updateTiles.push(spriteDef);
     });
 
-    this._storage.appendItem('tiles', this.parent?.id, updateTiles);
+    // use ourself as parent for op
+    this._storage.appendItem(this._tilesId, this.id, updateTiles);
 
     tiles.forEach(tile => {
       let row: any[] = this.rows[tile.y];
@@ -432,17 +446,71 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
   }
 }
 
-export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
+export class SpriteDefCollection {
   /**
    * collection of all sprites in a game
    */
   private _sprites: SpriteDef[] = [];
+  public asArray(): SpriteDef[] { return this._sprites; }
+
+  public push(sprite: SpriteDef) {
+    this._sprites.push(sprite);
+  }
+
+  public getByName(name: string): SpriteDef | undefined {
+    for (let i = 0; i < this._sprites.length; i++) {
+      if (this._sprites[i].name == name) {
+        return this._sprites[i];
+      }
+    }
+
+    return undefined;
+  }
+
+  public getByNameOrThrow(name: string): SpriteDef {
+    let sprite = this.getByName(name);
+    if (sprite === undefined) {
+      throw 'sprite not found';
+    }
+    return sprite;
+  }
+
+  public getById(id: string) {
+    for (let spriteKey in this._sprites) {
+      let sprite = this._sprites[spriteKey];
+      if (sprite.id === id) {
+        return sprite;
+      }
+    }
+    return undefined;
+  }
+
+  public forEach(func: any) {
+    this._sprites.forEach((x) => func(x));
+  }
+
+  public find(pred: (x: SpriteDef) => boolean): SpriteDef | undefined {
+    for (let spriteKey in this._sprites) {
+      let sprite = this._sprites[spriteKey];
+      if (pred(sprite)) {
+        return sprite;
+      }
+    }
+    return undefined;
+  }
+}
+
+export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
+  /**
+   * collection of all sprites in a game
+   */
+  private _sprites: SpriteDefCollection = new SpriteDefCollection();
   // @ts-ignore
   private _level: TileLevelDef;
   // @ts-ignore
   private _codeFile: CodeFileDef;
 
-  public get sprites(): SpriteDef[] { return this._sprites; }
+  public get sprites(): SpriteDefCollection { return this._sprites; }
   public get level(): TileLevelDef { return this._level; }
   public get codeFile(): CodeFileDef { return this._codeFile; }
 
@@ -472,7 +540,7 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
   }
 
   public createLevel(props: TileLevelProps): TileLevelDef {
-    this._level = new TileLevelDef(this._storage, this, undefined, props);
+    this._level = new TileLevelDef(this._storage, this, undefined, props, this._sprites);
     return this.level;
   }
 
@@ -481,11 +549,11 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
   }
 
   public processAdd(childId: string, op: any): void {
-    console.log('processAdd:' + op.target);
+    console.log('processAdd:' + op.target + ' ' + childId);
     if (op.target === 'Sprite') {
       this.sprites.push(SpriteDef.fromOp(this._storage, this, childId, op));
     } else if (op.target === 'TileLevel') {
-      this._level = TileLevelDef.fromOp(this._storage, this, childId, op);
+      this._level = TileLevelDef.fromOp(this._storage, this, childId, this._sprites, op);
     } else {
       this._codeFile = CodeFileDef.fromOp(this._storage, this, childId, op);
     }
@@ -495,7 +563,6 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
     return {
       target: 'Project',
       props: this.props,
-      spriteCount: this.sprites.length
     }
   }
 
@@ -557,9 +624,9 @@ export class Project {
     screen.createSprite('Air');
 
     screen.level.setTiles([
-      { sprite: screen.sprites[0], x: 0, y: 0 },
-      { sprite: screen.sprites[0], x: 1, y: 0 },
-      { sprite: screen.sprites[0], x: 2, y: 0 }]);
+      { sprite: screen.sprites.getByNameOrThrow('Leiq'), x: 0, y: 0 },
+      { sprite: screen.sprites.getByNameOrThrow('Leiq'), x: 1, y: 0 },
+      { sprite: screen.sprites.getByNameOrThrow('Leiq'), x: 2, y: 0 }]);
 
     screen.codeFile.createBlock('updateScene', '// put code to update scene here');
 
@@ -567,7 +634,7 @@ export class Project {
   }
 
   public forEachSprite(func: (file: SpriteDef) => void) {
-    this.def.sprites.forEach((x) => func(x));
+    this.def.sprites.forEach((x: SpriteDef) => func(x));
   }
 
   public forEachCodeFile(func: (file: CodeFileDef) => void) {
@@ -575,7 +642,7 @@ export class Project {
     if (this.def.level !== undefined) {
       func(this.def.level?.codeFile);
     }
-    this.def.sprites.forEach((x) => func(x.codeFile));
+    this.def.sprites.forEach((x: SpriteDef) => func(x.codeFile));
   }
 
   public findCodeFileById(id: string): CodeFileDef | undefined {
@@ -587,25 +654,11 @@ export class Project {
       return this.def.level.codeFile;
     }
 
-    for (let spriteKey in this.def.sprites) {
-      let sprite = this.def.sprites[spriteKey];
-      if (sprite.codeFile.id === id) {
-        return sprite.codeFile;
-      }
-    }
-
-    return undefined;
+    return this.def.sprites.find((x: SpriteDef) => x.codeFile.id === id)?.codeFile;
   }
 
   public findSpriteById(id: string): SpriteDef | undefined {
-    for (let spriteKey in this.def.sprites) {
-      let sprite = this.def.sprites[spriteKey];
-      if (sprite.id === id) {
-        return sprite;
-      }
-    }
-
-    return undefined;
+    return this.def.sprites.getById(id);
   }
 }
 
