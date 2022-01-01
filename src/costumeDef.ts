@@ -3,8 +3,8 @@ import { x64Hash64 } from './hash/murmurhash3';
 import AsyncEventSource from './AsyncEventSource';
 import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
 import { ObjectDef, IObjectDef } from './objectDef';
-import { SpriteDef } from './spriteDef';
-import { ISpriteSource } from './spriteSource';
+import { SpriteDef } from './SpriteDef';
+import { ISpriteSource } from './SpriteSource';
 
 export enum ImageFormat {
   svg,

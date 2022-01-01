@@ -3,8 +3,8 @@ import { CodeFileDef } from './codeFileDef';
 import { ObjectDef, IObjectDef } from './objectDef';
 import { CostumeDef } from './costumeDef';
 import { IProjectStorage, IStorageOpReceiver } from './projectStorage';
-import { Sprite } from './sprite';
-import { ISpriteSource } from './spriteSource';
+import { Sprite } from './Sprite';
+import { ISpriteSource } from './SpriteSource';
 
 /**
  * ATT: all methods should be static. We will deserialize JS into this class without casting

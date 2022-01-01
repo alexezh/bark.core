@@ -1,4 +1,4 @@
-import { ILevel } from 'tilelevel'
+import { ILevel } from 'TileLevel'
 
 export class Screen {
   private _width: number = 0;

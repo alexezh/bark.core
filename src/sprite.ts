@@ -1,6 +1,6 @@
-import { SpriteDef } from 'spriteDef';
+import { SpriteDef } from './SpriteDef';
 import { animator } from './animator';
-import { ISpriteSource, SpriteImage } from './spriteSource';
+import { ISpriteSource, SpriteImage } from './SpriteSource';
 
 export type SpriteProps = {
   x: number;

@@ -1,12 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
-import { x64Hash64 } from './hash/murmurhash3';
 import AsyncEventSource from './AsyncEventSource';
 import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
 import { ObjectDef, IObjectDef } from './objectDef';
-import { CostumeDef } from './costumeDef';
 import { CodeFileDef } from './codeFileDef';
-import { SpriteDef, SpriteDefCollection } from './spriteDef';
-import { TileLevelDef } from './tileLevelDef';
+import { SpriteDef, SpriteDefCollection } from './SpriteDef';
+import { TileLevelDef, TileLevelProps } from './TileLevelDef';
 
 export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
   /**

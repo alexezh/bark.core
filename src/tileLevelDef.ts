@@ -5,7 +5,8 @@ import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, St
 import { ObjectDef, IObjectDef } from './objectDef';
 import { CostumeDef } from './costumeDef';
 import { CodeFileDef } from './codeFileDef';
-import { SpriteDef, SpriteDefCollection } from './spriteDef';
+import { SpriteDef, SpriteDefCollection } from './SpriteDef';
+import { Sprite } from './Sprite';
 
 export type TileLevelProps = {
   /**
@@ -27,6 +28,13 @@ export type TileLevelProps = {
    * height of tile in pixels
    */
   tileHeight: number;
+}
+
+export type SpriteRef = {
+  x: number;
+  y: number;
+  id: string;
+  sprite: Sprite | undefined;
 }
 
 /**
@@ -125,6 +133,19 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     });
   }
 
+  public forEachTile(func: (sprite: Sprite) => void) {
+    this.rows.forEach(row => {
+      row.forEach((spriteRef: SpriteRef) => {
+        if (spriteRef.sprite === undefined) {
+          let spriteDef = this._sprites.getById(spriteRef.id);
+          spriteRef.sprite = spriteDef?.createSprite({ x: spriteRef.x, y: spriteRef.y });
+        }
+        // @ts-ignore
+        func(spriteRef.sprite);
+      });
+    });
+  }
+
   private updateTiles() {
     if (this.props.gridHeight > this.rows.length) {
       for (let i = this.rows.length; i < this.props.gridHeight; i++) {
@@ -147,11 +168,12 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     }
   }
 
-  private createSpriteRef(id: string, x: number, y: number) {
+  private createSpriteRef(id: string, x: number, y: number): SpriteRef {
     return {
       id: id,
       x: x,
-      y: y
+      y: y,
+      sprite: undefined
     }
   }
 }
