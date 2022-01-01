@@ -36,7 +36,7 @@ export interface IProjectStorage {
   /**
    * treats items as array of values
    */
-  appendItem(id: string, parent: string | undefined, value: any): void;
+  appendItems(id: string, parent: string | undefined, value: any[]): void;
 
   processRemoteOp(op: StorageOp): void;
 
@@ -75,14 +75,15 @@ export class ProjectLocalStorage implements IProjectStorage {
     this.queueChange(new StorageOp(StorageOpKind.remove, id));
   }
 
-  public appendItem(id: string, parent: string | undefined, value: any) {
+  public appendItems(id: string, parent: string | undefined, value: any[]) {
     let item = this._data[id];
     if (item === undefined) {
       item = { parent: parent, value: [] };
       this._data[id] = item;
     }
 
-    item.value.push(value);
+    value.forEach(x => item.value.push(x));
+
     this.queueChange(new StorageOp(StorageOpKind.append, id, undefined, value));
   }
 
@@ -188,7 +189,12 @@ export class ProjectLocalStorage implements IProjectStorage {
       }
     }
 
-    ops.push(new StorageOp(StorageOpKind.set, id, data.parent, data.value));
+    if (Array.isArray(data)) {
+      console.log('append : ' + data.value.length);
+      ops.push(new StorageOp(StorageOpKind.append, id, data.parent, data.value));
+    } else {
+      ops.push(new StorageOp(StorageOpKind.set, id, data.parent, data.value));
+    }
     writtenOps.add(id);
   }
 

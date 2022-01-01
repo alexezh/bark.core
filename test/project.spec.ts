@@ -16,5 +16,6 @@ describe('project tests', function () {
     });
 
     assert(screen2.level.rows.length === prj1.def.level.rows.length);
+    assert(screen2.sprites.length === prj1.def.sprites.length);
   });
 })

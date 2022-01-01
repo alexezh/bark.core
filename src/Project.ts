@@ -405,7 +405,7 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     });
 
     // use ourself as parent for op
-    this._storage.appendItem(this._tilesId, this.id, updateTiles);
+    this._storage.appendItems(this._tilesId, this.id, updateTiles);
 
     tiles.forEach(tile => {
       let row: any[] = this.rows[tile.y];
@@ -452,6 +452,7 @@ export class SpriteDefCollection {
    */
   private _sprites: SpriteDef[] = [];
   public asArray(): SpriteDef[] { return this._sprites; }
+  public get length(): number { return this._sprites.length; }
 
   public push(sprite: SpriteDef) {
     this._sprites.push(sprite);
@@ -470,7 +471,7 @@ export class SpriteDefCollection {
   public getByNameOrThrow(name: string): SpriteDef {
     let sprite = this.getByName(name);
     if (sprite === undefined) {
-      throw 'sprite not found';
+      throw 'sprite not found:' + name;
     }
     return sprite;
   }
@@ -624,9 +625,9 @@ export class Project {
     screen.createSprite('Air');
 
     screen.level.setTiles([
-      { sprite: screen.sprites.getByNameOrThrow('Leiq'), x: 0, y: 0 },
-      { sprite: screen.sprites.getByNameOrThrow('Leiq'), x: 1, y: 0 },
-      { sprite: screen.sprites.getByNameOrThrow('Leiq'), x: 2, y: 0 }]);
+      { sprite: screen.sprites.getByNameOrThrow('Leia'), x: 0, y: 0 },
+      { sprite: screen.sprites.getByNameOrThrow('Leia'), x: 1, y: 0 },
+      { sprite: screen.sprites.getByNameOrThrow('Leia'), x: 2, y: 0 }]);
 
     screen.codeFile.createBlock('updateScene', '// put code to update scene here');
 
