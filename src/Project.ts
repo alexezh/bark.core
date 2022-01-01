@@ -2,300 +2,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { x64Hash64 } from './hash/murmurhash3';
 import AsyncEventSource from './AsyncEventSource';
 import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
-
-export interface IObjectDef {
-  get id(): string;
-  // get path(): string;
-}
-
-export class ObjectDef implements IObjectDef {
-  public id: string;
-  public parent: IObjectDef | undefined;
-  protected _storage: IProjectStorage;
-
-  public constructor(
-    storage: IProjectStorage,
-    parent: IObjectDef | undefined,
-    id: string | undefined = undefined,
-    tag: string | undefined = undefined) {
-
-    this.id = (id) ? id : uuidv4();
-    // console.log('ObjectRef: ' + this.id + ' ' + tag);
-    this.parent = parent;
-    this._storage = storage;
-  }
-}
-
-export class CodeBlockDef extends ObjectDef implements IStorageOpReceiver {
-  public name: string;
-  public code: string;
-  public codeId: string;
-
-  public constructor(
-    storage: IProjectStorage,
-    parent: IObjectDef,
-    id: string | undefined,
-    name: string,
-    code: string,
-    codeId: string | undefined = undefined) {
-
-    super(storage, parent, id, 'CodeBlock');
-    this.name = name;
-    this.code = code;
-    this.codeId = (codeId) ? codeId : x64Hash64(code);
-    storage.registerReceiver(this.id, this);
-
-    if (id === undefined) {
-      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
-    }
-  }
-
-  public updateCode(code: string) {
-    this.code = code;
-    this.codeId = x64Hash64(code);
-
-    this._storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
-  }
-
-  public static fromOp(storage: IProjectStorage, parent: IObjectDef, id: string, op: any): CodeBlockDef {
-    return new CodeBlockDef(storage, parent, op.name, op.code, op.codeId);
-  }
-
-  public processSet(op: any): void {
-    this.name = op.name;
-    this.code = op.code;
-    this.codeId = op.codeId;
-  }
-
-  public processAdd(childId: string, op: any): void {
-    throw 'not implemented';
-  }
-
-  private createUpdateOp() {
-    return {
-      target: 'CodeBlock',
-      name: this.name,
-      code: this.code,
-      codeId: this.codeId
-    }
-  }
-}
-
-export class CodeFileDef extends ObjectDef implements IStorageOpReceiver {
-  // name of code file; for sprites the same as sprite name
-  public name: string;
-  public codeBlocks: CodeBlockDef[] = [];
-
-  public constructor(
-    storage: IProjectStorage,
-    parent: IObjectDef | undefined,
-    id: string | undefined,
-    name: string | undefined = undefined) {
-
-    super(storage, parent, id, 'CodeFile');
-    this.name = (name) ? name : 'No name';
-
-    storage.registerReceiver(this.id, this);
-    if (id === undefined) {
-      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
-    }
-  }
-
-  public createBlock(name: string, code: string) {
-    this.codeBlocks.push(new CodeBlockDef(this._storage, this, undefined, name, code));
-  }
-
-  public get firstBlock(): CodeBlockDef | undefined { return (this.codeBlocks.length > 0) ? this.codeBlocks[0] : undefined }
-
-  public static fromOp(storage: IProjectStorage, parent: IObjectDef, id: string, op: any): CodeFileDef {
-    return new CodeFileDef(storage, parent, id, op.name);
-  }
-
-  public processSet(op: any): void {
-    this.name = op.name;
-  }
-
-  public processAdd(childId: string, op: any): void {
-    this.codeBlocks.push(CodeBlockDef.fromOp(this._storage, this, childId, op));
-  }
-
-  private createUpdateOp(): any {
-    return {
-      target: 'CodeFile',
-      name: this.name,
-      codeBlockCount: this.codeBlocks.length
-    }
-  }
-}
-
-export enum ImageFormat {
-  svg,
-  png
-}
-
-export class ImageData {
-  public readonly image: string | undefined = undefined;
-  public readonly imageFormat: ImageFormat = ImageFormat.svg;
-  public readonly imageId: string | undefined = undefined;
-
-  public constructor(imageFormat: ImageFormat, image: string, imageId: string | undefined = undefined) {
-    this.imageFormat = imageFormat;
-    this.image = image;
-    this.imageId = (imageId) ? imageId : x64Hash64(image);
-  }
-
-  public static isEqual(a: ImageData | undefined, b: ImageData | undefined): boolean {
-    if (a === undefined && b === undefined) {
-      return true;
-    } else if (a === undefined || b === undefined) {
-      return false;
-    } else {
-      // @ts-ignore
-      return a.imageId === b.imageId;
-    }
-  }
-}
-
-/**
- * ATT: all methods should be static. We will deserialize JS into this class without casting
- */
-export class CostumeDef extends ObjectDef implements IStorageOpReceiver {
-  public name: string = 'No name';
-  public imageData: ImageData | undefined;
-
-  public constructor(
-    storage: IProjectStorage,
-    parent: IObjectDef,
-    id: string | undefined) {
-
-    super(storage, parent, id, 'Costume');
-    storage.registerReceiver(this.id, this);
-    if (id === undefined) {
-      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
-    }
-  }
-
-  public updateImage(imageData: ImageData) {
-    this.imageData = imageData;
-
-    let sprite = this.parent as SpriteDef;
-    if (sprite !== undefined) {
-      sprite.onCostumeChange.invoke(this);
-    }
-
-    this._storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
-  }
-
-  public static fromOp(storage: IProjectStorage, parent: IObjectDef, id: string, op: any) {
-    let costume = new CostumeDef(storage, parent, id);
-    costume.processSet(op);
-    return costume;
-  }
-
-  public processSet(op: any): void {
-    this.name = op.name;
-    this.imageData = new ImageData(op.imageFormat, op.image, op.imageId);
-  }
-
-  public processAdd(childId: string, op: any): void {
-    throw 'not implemented';
-  }
-
-  private createUpdateOp() {
-    return {
-      target: 'Costume',
-      name: this.name,
-      image: this.imageData?.image,
-      imageFormat: this.imageData?.imageFormat,
-      imageId: this.imageData?.imageId
-    }
-  }
-}
-
-/**
- * ATT: all methods should be static. We will deserialize JS into this class without casting
- */
-export class SpriteDef extends ObjectDef implements IStorageOpReceiver {
-  // user defined name of the sprite
-  public name: string = 'No name';
-  public width: number = 0;
-  public height: number = 0;
-  // @ts-ignore
-  public codeFile: CodeFileDef;
-  public costumes: CostumeDef[] = [];
-
-  /**
-   * called when costume changes
-   */
-  public onCostumeChange = new AsyncEventSource<(costume: CostumeDef) => void>();
-
-  public constructor(
-    storage: IProjectStorage,
-    parent: IObjectDef | undefined,
-    id: string | undefined,
-    name: string) {
-
-    super(storage, parent, id, 'Sprite');
-    this.name = name;
-
-    storage.registerReceiver(this.id, this);
-
-    // add one costume by default
-    if (id === undefined) {
-      this.codeFile = new CodeFileDef(storage, this, undefined, name);
-      storage.setItem(this.id, this.parent?.id, this.createUpdateOp());
-      this.costumes.push(new CostumeDef(storage, this, undefined));
-    }
-  }
-
-  public get firstCostume(): CostumeDef { return this.costumes[0] }
-
-  public findCostume(id: string): CostumeDef | undefined {
-    for (let i = 0; i < this.costumes.length; i++) {
-      if (this.costumes[i].id == id) {
-        return this.costumes[i];
-      }
-    }
-
-    return undefined;
-  }
-
-  public static fromOp(storage: IProjectStorage, parent: IObjectDef, id: string, op: any): SpriteDef {
-    let sprite = new SpriteDef(storage, parent, id, op.name);
-    sprite.processSet(op);
-    return sprite;
-  }
-
-  public processSet(op: any): void {
-    this.name = op.name;
-    this.width = op.width;
-    this.height = op.height;
-  }
-
-  public processAdd(childId: string, op: any): void {
-    this.costumes.push(CostumeDef.fromOp(this._storage, this, childId, op));
-  }
-
-  private createUpdateOp() {
-    return {
-      target: 'Sprite',
-      name: this.name,
-      width: this.width,
-      height: this.height,
-      costumeCount: this.costumes.length
-    }
-  }
-
-  public static isEqual(a: SpriteDef | undefined, b: SpriteDef | undefined): boolean {
-    if (a === undefined && b === undefined) {
-      return true;
-    } else if (a === undefined || b === undefined) {
-      return false;
-    } else {
-      return a === b;
-    }
-  }
-}
+import { ObjectDef, IObjectDef } from './objectDef';
+import { CostumeDef } from './costumeDef';
+import { CodeFileDef } from './codeFileDef';
+import { SpriteDef } from './spriteDef';
 
 export type TileLevelProps = {
   /**
@@ -584,13 +294,22 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
   }
 }
 
+export enum ChangeEventKind {
+  SetScreen,
+  SetSprite,
+  RemoveSprite,
+  SetCostume,
+  SetTile,
+  SetCodeFile,
+}
+
 /**
  * utility method for managing project
  */
 export class Project {
   public readonly screen: ScreenDef;
   public readonly _storage: ProjectLocalStorage;
-  public readonly onChange: AsyncEventSource<() => void> = new AsyncEventSource<() => void>();
+  public readonly onChange: AsyncEventSource<(kind: ChangeEventKind) => void> = new AsyncEventSource<() => void>();
 
   public get storage(): IProjectStorage { return this._storage; }
 
@@ -660,6 +379,10 @@ export class Project {
 
   public findSpriteById(id: string): SpriteDef | undefined {
     return this.screen.sprites.getById(id);
+  }
+
+  public registerOnChange() {
+
   }
 }
 
