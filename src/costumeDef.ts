@@ -4,6 +4,7 @@ import AsyncEventSource from './AsyncEventSource';
 import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './projectStorage';
 import { ObjectDef, IObjectDef } from './objectDef';
 import { SpriteDef } from './spriteDef';
+import { ISpriteSource } from './spriteSource';
 
 export enum ImageFormat {
   svg,
@@ -39,6 +40,10 @@ export class ImageData {
 export class CostumeDef extends ObjectDef implements IStorageOpReceiver {
   public name: string = 'No name';
   public imageData: ImageData | undefined;
+  private _version: number = 1.0;
+  private _cachedSpriteSource: CostumeImage | undefined = undefined;
+
+  public get version() { return this._version; }
 
   public constructor(
     storage: IProjectStorage,
@@ -54,6 +59,7 @@ export class CostumeDef extends ObjectDef implements IStorageOpReceiver {
 
   public updateImage(imageData: ImageData) {
     this.imageData = imageData;
+    this._version++;
 
     let sprite = this.parent as SpriteDef;
     if (sprite !== undefined) {
@@ -72,10 +78,18 @@ export class CostumeDef extends ObjectDef implements IStorageOpReceiver {
   public processSet(op: any): void {
     this.name = op.name;
     this.imageData = new ImageData(op.imageFormat, op.image, op.imageId);
+    this._version++;
   }
 
   public processAdd(childId: string, op: any): void {
     throw 'not implemented';
+  }
+
+  public getSpriteSource() {
+    if (this._cachedSpriteSource === undefined) {
+      this._cachedSpriteSource = new CostumeImage(this);
+    }
+    return this._cachedSpriteSource;
   }
 
   private createUpdateOp() {
@@ -89,3 +103,28 @@ export class CostumeDef extends ObjectDef implements IStorageOpReceiver {
   }
 }
 
+export class CostumeImage implements ISpriteSource {
+  private _image: any;
+  private _costumeVersion: number;
+  private _costume: CostumeDef;
+
+  public constructor(costume: CostumeDef) {
+    this._costume = costume;
+    this._costumeVersion = this._costume.version;
+    this.loadImage();
+  }
+
+  public draw(ctx: any, x: number, y: number, w: number, h: number): void {
+    if (this._costumeVersion !== this._costume.version) {
+      this.loadImage();
+    }
+
+    ctx.drawImage(this._image, x, y, w, h);
+  }
+
+  private loadImage() {
+    this._image = new Image();
+    this._image.src = this._costume.imageData?.image;
+    this._costumeVersion = this._costume.version;
+  }
+}

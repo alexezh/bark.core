@@ -3,6 +3,8 @@ import { CodeFileDef } from './codeFileDef';
 import { ObjectDef, IObjectDef } from './objectDef';
 import { CostumeDef } from './costumeDef';
 import { IProjectStorage, IStorageOpReceiver } from './projectStorage';
+import { Sprite } from './sprite';
+import { ISpriteSource } from './spriteSource';
 
 /**
  * ATT: all methods should be static. We will deserialize JS into this class without casting
@@ -86,6 +88,69 @@ export class SpriteDef extends ObjectDef implements IStorageOpReceiver {
     } else {
       return a === b;
     }
+  }
+
+  /** 
+   * create sprite object. The sprite will inherit code and image from definition 
+   * ATT: it should use custom draw method if available
+  */
+  public createSprite(args: { x: number, y: number }): Sprite {
+    return new Sprite(this, { x: args.x, y: args.y, w: this.width, h: this.height, flipH: false })
+  }
+}
+
+export class SpriteDefCollection {
+  /**
+   * collection of all sprites in a game
+   */
+  private _sprites: SpriteDef[] = [];
+  public asArray(): SpriteDef[] { return this._sprites; }
+  public get length(): number { return this._sprites.length; }
+
+  public push(sprite: SpriteDef) {
+    this._sprites.push(sprite);
+  }
+
+  public getByName(name: string): SpriteDef | undefined {
+    for (let i = 0; i < this._sprites.length; i++) {
+      if (this._sprites[i].name == name) {
+        return this._sprites[i];
+      }
+    }
+
+    return undefined;
+  }
+
+  public getByNameOrThrow(name: string): SpriteDef {
+    let sprite = this.getByName(name);
+    if (sprite === undefined) {
+      throw 'sprite not found:' + name;
+    }
+    return sprite;
+  }
+
+  public getById(id: string) {
+    for (let spriteKey in this._sprites) {
+      let sprite = this._sprites[spriteKey];
+      if (sprite.id === id) {
+        return sprite;
+      }
+    }
+    return undefined;
+  }
+
+  public forEach(func: any) {
+    this._sprites.forEach((x) => func(x));
+  }
+
+  public find(pred: (x: SpriteDef) => boolean): SpriteDef | undefined {
+    for (let spriteKey in this._sprites) {
+      let sprite = this._sprites[spriteKey];
+      if (pred(sprite)) {
+        return sprite;
+      }
+    }
+    return undefined;
   }
 }
 
