@@ -36,7 +36,7 @@ export interface IProjectStorage {
   /**
    * treats items as array of values
    */
-  appendItem(id: string, value: any): void;
+  appendItem(id: string, parent: string | undefined, value: any): void;
 
   processRemoteOp(op: StorageOp): void;
 
@@ -52,7 +52,7 @@ export interface IProjectStorage {
 }
 
 export class ProjectLocalStorage implements IProjectStorage {
-  private _data: { [key: string]: any } = {};
+  private _data: { [key: string]: { parent: string | undefined, value: any } } = {};
   private _receivers: { [key: string]: WeakRef<IStorageOpReceiver> } = {}
   private _onChange: AsyncEventSource<(costume: StorageOp[]) => void> = new AsyncEventSource<(costume: StorageOp[]) => void>();
   private _changeQueue: StorageOp[] = [];
@@ -66,7 +66,7 @@ export class ProjectLocalStorage implements IProjectStorage {
     throw new Error("Method not implemented.");
   }
   public setItem(id: string, parent: string | undefined, value: any) {
-    this._data[id] = value;
+    this._data[id] = { parent: parent, value: value };
     this.queueChange(new StorageOp(StorageOpKind.set, id, parent, value));
   }
 
@@ -75,14 +75,14 @@ export class ProjectLocalStorage implements IProjectStorage {
     this.queueChange(new StorageOp(StorageOpKind.remove, id));
   }
 
-  public appendItem(id: string, value: any) {
+  public appendItem(id: string, parent: string | undefined, value: any) {
     let item = this._data[id];
     if (item === undefined) {
-      item = [];
+      item = { parent: parent, value: [] };
       this._data[id] = item;
     }
 
-    item.push(value);
+    item.value.push(value);
     this.queueChange(new StorageOp(StorageOpKind.append, id, undefined, value));
   }
 
@@ -107,6 +107,8 @@ export class ProjectLocalStorage implements IProjectStorage {
 
     // if we do not have object, try to create one in parent
     if (!weakReceiver) {
+      console.log('ProjectLocalStorage: no receiver for id:' + op.id);
+
       if (op.parent === undefined) {
         throw 'ProjectLocalStorage: op.parent undefined';
       }
@@ -122,16 +124,17 @@ export class ProjectLocalStorage implements IProjectStorage {
         return;
       }
 
-      parent.
-    }
+      parent.processAdd(op.id, op.value);
+    } else {
+      let receiver = weakReceiver.deref();
+      if (!receiver) {
+        console.log('ProjectLocalStorage: object released: ' + op.id);
+        return;
+      }
 
-    let receiver = weakReceiver.deref();
-    if (!receiver) {
-      console.log('ProjectLocalStorage: object released: ' + op.id);
-      return;
+      console.log('process for id:' + op.id);
+      receiver.processSet(op.value);
     }
-
-    receiver.processOp(op.value);
   }
 
   private queueChange(op: StorageOp) {
@@ -158,7 +161,7 @@ export class ProjectLocalStorage implements IProjectStorage {
     // send current state to sink
     let ops: any[] = [];
     for (let id in this._data) {
-      ops.push(new StorageOp(StorageOpKind.set, id, this._data[id]));
+      ops.push(new StorageOp(StorageOpKind.set, id, this._data[id].value));
     }
     func(ops);
 
@@ -174,8 +177,40 @@ export class ProjectLocalStorage implements IProjectStorage {
     this._receivers[id] = new WeakRef<IStorageOpReceiver>(receiver);
   }
 
-  public toJson(): string {
+  private makePopulateOp(
+    id: string,
+    ops: any[],
+    writtenOps: Set<string>) {
+
+    if (writtenOps.has(id)) {
+      return;
+    }
+
+    if (data.parent !== undefined) {
+      if (!writtenOps.has(data.parent)) {
+        this.makePopulateOp(data.parent, this._data[data.parent], ops, writtenOps);
+      }
+    }
+
+    ops.push(new StorageOp(StorageOpKind.set, id, data.parent, data.value));
+    writtenOps.add(id);
+  }
+
+  private makePopulateList(): any[] {
     let ops: any[] = [];
+    let writtenOps: Set<string> = new Set<string>();
+    for (let id in this._data) {
+      this.makePopulateOp(id, ops, writtenOps);
+    }
+    return ops;
+  }
+
+  public toJson(): string {
+    // make sure to insert parent ops before child ops
+    // to do this, keep map of all items when we pushed and make sure that we pushed parent
+    let ops: any[] = [];
+    let writtenOps: { [key: string]: any } = {}
+
     for (let id in this._data) {
       ops.push(new StorageOp(StorageOpKind.set, id, this._data[id]));
     }

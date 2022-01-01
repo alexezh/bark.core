@@ -186,7 +186,7 @@ export class PropertyAnimationManager {
 
     // run animation on 100 ms
     let self = this;
-    window.setInterval(() => self.processAnimation(), 100);
+    setInterval(() => self.processAnimation(), 100);
   }
 
   public animateLinear(prop: NumberProperty, delta: number, step: number) {

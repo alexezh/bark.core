@@ -13,7 +13,10 @@ export class ObjectDef implements IObjectDef {
   public parent: IObjectDef | undefined;
   protected _storage: IProjectStorage;
 
-  public constructor(storage: IProjectStorage, parent: IObjectDef | undefined, id: string | undefined = undefined) {
+  public constructor(
+    storage: IProjectStorage,
+    parent: IObjectDef | undefined,
+    id: string | undefined = undefined) {
     this.id = (id) ? id : uuidv4();
     this.parent = parent;
     this._storage = storage;
@@ -252,6 +255,12 @@ export class SpriteDef extends ObjectDef implements IStorageOpReceiver {
     return undefined;
   }
 
+  public static fromOp(storage: IProjectStorage, parent: IObjectDef, id: string, op: any): SpriteDef {
+    let sprite = new SpriteDef(storage, parent, id, op.name);
+    sprite.processSet(op);
+    return sprite;
+  }
+
   public processSet(op: any): void {
     this.name = op.name;
     this.width = op.width;
@@ -333,6 +342,12 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     }
   }
 
+  public static fromOp(storage: IProjectStorage, parent: IObjectDef, id: string, op: any): TileLevelDef {
+    let level = new TileLevelDef(storage, parent, id, op.props);
+    level.processSet(op);
+    return level;
+  }
+
   public processSet(op: any): void {
     this.props = op.props;
     this.rows = op.rows;
@@ -406,15 +421,21 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
   }
 }
 
-export class ScreenDef extends ObjectDef {
+export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
   /**
    * collection of all sprites in a game
    */
-  public sprites: SpriteDef[] = [];
+  private _sprites: SpriteDef[] = [];
   // @ts-ignore
-  public level: TileLevelDef;
+  private _level: TileLevelDef;
   // @ts-ignore
-  public codeFile: CodeFileDef;
+  private _codeFile: CodeFileDef;
+
+  public get sprites(): SpriteDef[] { return this._sprites; }
+  public get level(): TileLevelDef { return this._level; }
+  public get codeFile(): CodeFileDef { return this._codeFile; }
+
+  // @ts-ignore
   public props: {
     screenWidth: number,
     screenHeight: number,
@@ -422,17 +443,50 @@ export class ScreenDef extends ObjectDef {
 
   public constructor(
     storage: IProjectStorage,
-    screenWidth: number,
-    screenHeight: number) {
+    props: {
+      screenWidth: number,
+      screenHeight: number
+    } | undefined = undefined) {
 
-    super(storage, undefined);
+    super(storage, undefined, 'screen');
 
     this._storage = storage;
-    this.props = {
-      screenWidth: screenWidth,
-      screenHeight: screenHeight
+    storage.registerReceiver(this.id, this);
+
+    if (props !== undefined) {
+      this.props = props;
+      this._codeFile = new CodeFileDef(storage, this, undefined, 'game');
+      storage.setItem(this.id, undefined, this.createUpdateOp());
     }
-    storage.setItem('screen', undefined, this.createUpdateOp());
+  }
+
+  public createLevel(props: TileLevelProps): TileLevelDef {
+    this._level = new TileLevelDef(this._storage, this, undefined, props);
+    return this.level;
+  }
+
+  public processSet(op: any): void {
+    console.log('props :' + op.props);
+    this.props = op.props;
+  }
+
+  public processAdd(childId: string, op: any): void {
+    if (op.target === 'Sprite') {
+      this.sprites.push(SpriteDef.fromOp(this._storage, this, childId, op));
+    } else if (op.target === 'TileLevel') {
+      this._level = TileLevelDef.fromOp(this._storage, this, childId, op);
+    } else {
+      this._codeFile = CodeFileDef.fromOp(this._storage, this, childId, op);
+    }
+  }
+
+  private createUpdateOp() {
+    console.log('props :' + this.props);
+    return {
+      target: 'Project',
+      props: this.props,
+      spriteCount: this.sprites.length
+    }
   }
 
   public setSize(screenWidth: number, screenHeight: number) {
@@ -442,18 +496,13 @@ export class ScreenDef extends ObjectDef {
     this._storage.setItem('screen', undefined, this.createUpdateOp());
   }
 
+  /**
+   * create sprite and adds it to the list
+   */
   public createSprite(name: string): SpriteDef {
-    let sprite = new SpriteDef(this._storage, undefined, name);
+    let sprite = new SpriteDef(this._storage, this, undefined, name);
     this.sprites.push(sprite);
     return sprite;
-  }
-
-  private createUpdateOp() {
-    return {
-      target: 'Project',
-      props: this.props,
-      spriteCount: this.sprites.length
-    }
   }
 }
 
@@ -483,28 +532,28 @@ export class Project {
     };
 
     let gridHeight = 8;
-    let def = new ScreenDef(
+    let screen = new ScreenDef(
       storage,
-      levelProps.tileWidth * 20,
-      levelProps.tileHeight * 8);
+      {
+        screenWidth: levelProps.tileWidth * 20,
+        screenHeight: levelProps.tileHeight * 8
+      });
 
-    let level = new TileLevelDef(storage, def, levelProps);
-    def.level = level;
-    def.codeFile = new CodeFileDef(storage, undefined, 'game');
+    screen.createLevel(levelProps);
 
     // create a default sprite
-    def.sprites.push(new SpriteDef(storage, undefined, 'Leia'));
-    def.sprites.push(new SpriteDef(storage, undefined, 'Floor'));
-    def.sprites.push(new SpriteDef(storage, undefined, 'Air'));
+    screen.createSprite('Leia');
+    screen.createSprite('Floor');
+    screen.createSprite('Air');
 
-    def.level.setTiles([
-      { sprite: def.sprites[0], x: 0, y: 0 },
-      { sprite: def.sprites[0], x: 1, y: 0 },
-      { sprite: def.sprites[0], x: 2, y: 0 }]);
+    screen.level.setTiles([
+      { sprite: screen.sprites[0], x: 0, y: 0 },
+      { sprite: screen.sprites[0], x: 1, y: 0 },
+      { sprite: screen.sprites[0], x: 2, y: 0 }]);
 
-    def.codeFile.createBlock('updateScene', '// put code to update scene here');
+    screen.codeFile.createBlock('updateScene', '// put code to update scene here');
 
-    return new Project(storage, def);
+    return new Project(storage, screen);
   }
 
   public forEachSprite(func: (file: SpriteDef) => void) {
