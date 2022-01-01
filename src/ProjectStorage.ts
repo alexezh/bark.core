@@ -1,8 +1,9 @@
 import AsyncEventSource from './AsyncEventSource';
 
 export enum StorageOpKind {
-  set = 'set',
   remove = 'remove',
+  /** update item */
+  set = 'set',
   append = 'append',
   screenReady = 'screenReady',
   selectSprite = 'selectSprite'
@@ -11,22 +12,25 @@ export enum StorageOpKind {
 export class StorageOp {
   public readonly kind: StorageOpKind;
   public readonly id: string;
+  public readonly parent: string | undefined;
   public readonly value: any;
 
-  public constructor(kind: StorageOpKind, id: string, value: any = null) {
+  public constructor(kind: StorageOpKind, id: string, parent: string | undefined = undefined, value: any = null) {
     this.kind = kind;
     this.id = id;
+    this.parent = parent;
     this.value = value;
   }
 }
 
 export interface IStorageOpReceiver {
-  processOp(op: any): void;
+  processSet(op: any): void;
+  processAdd(childId: string, op: any): void;
 }
 
 export interface IProjectStorage {
   updateSnapshot(json: string): void;
-  setItem(id: string, value: any): void;
+  setItem(id: string, parent: string | undefined, value: any): void;
   removeItem(id: string): void;
 
   /**
@@ -61,9 +65,9 @@ export class ProjectLocalStorage implements IProjectStorage {
   public updateSnapshot(json: string) {
     throw new Error("Method not implemented.");
   }
-  public setItem(id: string, value: any) {
+  public setItem(id: string, parent: string | undefined, value: any) {
     this._data[id] = value;
-    this.queueChange(new StorageOp(StorageOpKind.set, id, value));
+    this.queueChange(new StorageOp(StorageOpKind.set, id, parent, value));
   }
 
   public removeItem(id: string) {
@@ -79,7 +83,7 @@ export class ProjectLocalStorage implements IProjectStorage {
     }
 
     item.push(value);
-    this.queueChange(new StorageOp(StorageOpKind.append, id, value));
+    this.queueChange(new StorageOp(StorageOpKind.append, id, undefined, value));
   }
 
   public processRemoteOp(op: StorageOp) {
@@ -102,14 +106,28 @@ export class ProjectLocalStorage implements IProjectStorage {
     let weakReceiver = this._receivers[op.id];
 
     // if we do not have object, try to create one in parent
-    if (weakReceiver === undefined) {
-      
-      return;
+    if (!weakReceiver) {
+      if (op.parent === undefined) {
+        throw 'ProjectLocalStorage: op.parent undefined';
+      }
+      let weakParent = this._receivers[op.parent];
+      if (!weakParent) {
+        console.log('ProjectLocalStorage: parent not registered: ' + op.parent);
+        return;
+      }
+
+      let parent = weakParent.deref();
+      if (!parent) {
+        console.log('ProjectLocalStorage: parent released: ' + op.parent);
+        return;
+      }
+
+      parent.
     }
 
     let receiver = weakReceiver.deref();
     if (!receiver) {
-      console.log('received released: ' + op.id);
+      console.log('ProjectLocalStorage: object released: ' + op.id);
       return;
     }
 
