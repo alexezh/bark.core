@@ -1,10 +1,10 @@
-import { ScreenDef } from 'ScreenDef';
-import { ILevel } from 'TileLevel'
+import { ScreenDef } from './ScreenDef';
+import { ILevel, TileLevel } from './TileLevel'
 
 export class Screen {
   private _def: ScreenDef;
-  private _level: ILevel | null = null;
-  private _canvas: any = null;
+  private _level: ILevel | undefined = undefined;
+  private _canvas: any = undefined;
   private _width: number = 0;
   private _height: number = 0;
   private _cameraX: number = 0;
@@ -18,9 +18,8 @@ export class Screen {
 
   public constructor(def: ScreenDef) {
     this._def = def;
-    this._width = this._def.props.screenWidth;
-    this._height = this._def.props.screenHeight;
 
+    this.onScreenChange();
     this._def.onChange.add(() => this.onScreenChange())
   }
 
@@ -46,11 +45,23 @@ export class Screen {
   }
 
   public onScreenChange() {
-    this._width = this._def.props.screenWidth;
-    this._height = this._def.props.screenHeight;
+    if (this._width !== this._def.props.screenWidth ||
+      this._height !== this._def.props.screenHeight) {
 
-    this._canvas.width = this._width;
-    this._canvas.height = this._height;
+      console.log('update parameters');
+      this._width = this._def.props.screenWidth;
+      this._height = this._def.props.screenHeight;
+
+      if (this._canvas !== undefined) {
+        this._canvas.width = this._width;
+        this._canvas.height = this._height;
+      }
+    }
+
+    if (this._level === null && this._def.level !== undefined) {
+      console.log('create level');
+      this._level = new TileLevel(this._def.level);
+    }
   }
 
   // repaint screen based on current scrolling position
@@ -62,7 +73,7 @@ export class Screen {
 
     ctx.translate(-this.scrollX, 0);
 
-    if (this._level !== null) {
+    if (this._level !== undefined) {
       this._level.draw(ctx, 0, this._width);
     }
 
