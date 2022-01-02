@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { IProjectStorage } from './ProjectStorage';
+import { IProjectStorage } from './IProjectStorage';
 
 export interface IObjectDef {
   get id(): string;

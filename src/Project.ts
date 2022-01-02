@@ -1,5 +1,6 @@
 import AsyncEventSource from './AsyncEventSource';
-import { IProjectStorage, IStorageOpReceiver, ProjectLocalStorage, StorageOp, StorageOpKind } from './ProjectStorage';
+import { IProjectStorage, IStorageOpReceiver, StorageOp, StorageOpKind } from './IProjectStorage';
+import { ProjectLocalStorage } from './ProjectStorage';
 import { ObjectDef, IObjectDef } from './ObjectDef';
 import { CodeFileDef } from './CodeFileDef';
 import { SpriteDef, SpriteDefCollection } from './SpriteDef';
@@ -10,14 +11,15 @@ import { ScreenDef } from './ScreenDef';
  * utility method for managing project
  */
 export class Project {
-  public readonly screen: ScreenDef;
-  public readonly _storage: ProjectLocalStorage;
+  private readonly _screen: ScreenDef;
+  private readonly _storage: ProjectLocalStorage;
 
   public get storage(): IProjectStorage { return this._storage; }
+  public get screen(): ScreenDef { return this._screen; }
 
   public constructor(storage: ProjectLocalStorage, def: ScreenDef) {
     this._storage = storage;
-    this.screen = def;
+    this._screen = def;
   }
 
   public static createEmptyProject(): Project {

@@ -21,6 +21,10 @@ module.exports = {
   output: {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
+    library: {
+      name: "bark-core",
+      type: "umd",
+    },
   },
   plugins: [
     new TypescriptDeclarationPlugin({

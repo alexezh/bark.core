@@ -2,9 +2,8 @@
   "version": "3.0.3",
   "compilerOptions": {
     "target": "es5",
-    "module": "commonjs",
+    "module": "esnext",
     "removeComments": true,
-    "baseUrl": "./src",
     "outDir": "./out",
     "sourceMap": true,
     "alwaysStrict": true,

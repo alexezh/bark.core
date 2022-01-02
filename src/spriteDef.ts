@@ -2,7 +2,7 @@ import AsyncEventSource from './AsyncEventSource'
 import { CodeFileDef } from './CodeFileDef';
 import { ObjectDef, IObjectDef } from './ObjectDef';
 import { CostumeDef } from './CostumeDef';
-import { IProjectStorage, IStorageOpReceiver } from './ProjectStorage';
+import { IProjectStorage, IStorageOpReceiver } from './IProjectStorage';
 import { Sprite } from './Sprite';
 import { ISpriteSource } from './SpriteSource';
 
@@ -139,6 +139,10 @@ export class SpriteDefCollection {
     return undefined;
   }
 
+  public getByIndex(idx: number) {
+    return this._sprites[idx];
+  }
+
   public forEach(func: any) {
     this._sprites.forEach((x) => func(x));
   }
@@ -152,5 +156,10 @@ export class SpriteDefCollection {
     }
     return undefined;
   }
+
+  public map(func: (sprite: SpriteDef) => any) {
+
+    return this._sprites.map(func);
+  };
 }
 

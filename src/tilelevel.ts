@@ -1,5 +1,5 @@
-import { SpriteDefCollection } from "SpriteDef";
-import { TileDef, TileLevelDef } from "TileLevelDef";
+import { SpriteDefCollection } from "./SpriteDef";
+import { TileDef, TileLevelDef } from "./TileLevelDef";
 import { Sprite } from "./Sprite";
 
 export interface ILevel {

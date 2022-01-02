@@ -1,4 +1,4 @@
-import { IProjectStorage, IStorageOpReceiver } from './ProjectStorage';
+import { IProjectStorage, IStorageOpReceiver } from './IProjectStorage';
 import { ObjectDef, IObjectDef } from './ObjectDef';
 import { CodeFileDef } from './CodeFileDef';
 import { SpriteDef, SpriteDefCollection } from './SpriteDef';
