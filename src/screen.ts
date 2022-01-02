@@ -1,10 +1,12 @@
+import { ScreenDef } from 'ScreenDef';
 import { ILevel } from 'TileLevel'
 
 export class Screen {
-  private _width: number = 0;
-  private _height: number = 0;
+  private _def: ScreenDef;
   private _level: ILevel | null = null;
   private _canvas: any = null;
+  private _width: number = 0;
+  private _height: number = 0;
   private _cameraX: number = 0;
   private _cameraY: number = 0;
   private _scrollX: number = 0;
@@ -13,6 +15,14 @@ export class Screen {
   public get scrollX() { return this._scrollX; }
   public get width() { return this._width; }
   public get height() { return this._height; }
+
+  public constructor(def: ScreenDef) {
+    this._def = def;
+    this._width = this._def.props.screenWidth;
+    this._height = this._def.props.screenHeight;
+
+    this._def.onChange.add(() => this.onScreenChange())
+  }
 
   // screen is a main object of the game
   public setLevel(level: ILevel) {
@@ -35,9 +45,12 @@ export class Screen {
     this._level?.setEditMode(edit);
   }
 
-  public resize(screenWidth: number, screenHeight: number) {
-    this._canvas.width = screenWidth;
-    this._canvas.height = screenHeight;
+  public onScreenChange() {
+    this._width = this._def.props.screenWidth;
+    this._height = this._def.props.screenHeight;
+
+    this._canvas.width = this._width;
+    this._canvas.height = this._height;
   }
 
   // repaint screen based on current scrolling position
@@ -64,6 +77,7 @@ export class Screen {
     return x - this.scrollX;
   }
 
+  /*
   public setCamera(x: number, y: number) {
     if (this._level === null) {
       return;
@@ -98,4 +112,5 @@ export class Screen {
     this._cameraX = x;
     this._cameraY = y;
   }
+  */
 }

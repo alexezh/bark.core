@@ -1,4 +1,4 @@
-import { Screen } from './screen';
+import { Screen } from './Screen';
 
 export class Game {
   private _screen: Screen | null = null;
