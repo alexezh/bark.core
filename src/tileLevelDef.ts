@@ -30,11 +30,11 @@ export type TileLevelProps = {
   tileHeight: number;
 }
 
-export type SpriteRef = {
+export type TileDef = {
   x: number;
   y: number;
   id: string;
-  sprite: Sprite | undefined;
+  viewId: number;
 }
 
 /**
@@ -48,6 +48,7 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
   public props: TileLevelProps;
   private _tilesId: string;
   private _sprites: SpriteDefCollection;
+  private _nextViewId: number = 1.0;
 
   public constructor(
     storage: IProjectStorage,
@@ -133,15 +134,11 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     });
   }
 
-  public forEachTile(func: (sprite: Sprite) => void) {
+  public forEachTile(func: (tile: TileDef | null, sprites: SpriteDefCollection) => void) {
     this.rows.forEach(row => {
-      row.forEach((spriteRef: SpriteRef) => {
-        if (spriteRef.sprite === undefined) {
-          let spriteDef = this._sprites.getById(spriteRef.id);
-          spriteRef.sprite = spriteDef?.createSprite({ x: spriteRef.x, y: spriteRef.y });
-        }
+      row.forEach((tileRef: TileDef) => {
         // @ts-ignore
-        func(spriteRef.sprite);
+        func(tileRef, this._sprites);
       });
     });
   }
@@ -168,12 +165,12 @@ export class TileLevelDef extends ObjectDef implements IStorageOpReceiver {
     }
   }
 
-  private createSpriteRef(id: string, x: number, y: number): SpriteRef {
+  private createSpriteRef(id: string, x: number, y: number): TileDef {
     return {
       id: id,
       x: x,
       y: y,
-      sprite: undefined
+      viewId: this._nextViewId++,
     }
   }
 }

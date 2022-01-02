@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid';
-import { x64Hash64 } from './hash/murmurhash3';
 import { IProjectStorage } from './ProjectStorage';
 
 export interface IObjectDef {

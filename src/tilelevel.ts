@@ -1,4 +1,5 @@
-import { TileLevelDef } from "TileLevelDef";
+import { SpriteDefCollection } from "SpriteDef";
+import { TileDef, TileLevelDef } from "TileLevelDef";
 import { Sprite } from "./Sprite";
 
 export interface ILevel {
@@ -27,7 +28,7 @@ export class Pos {
 // each character references sprite registered with addSprite call
 export class TileLevel implements ILevel {
   private _def: TileLevelDef;
-  private _tileSprites: { [key: string]: Sprite } = {};
+  private _tileSprites: Map<number, Sprite> = new Map<number, Sprite>();
   private _sprites: Sprite[] = [];
   private _editMode: boolean = true;
 
@@ -48,10 +49,22 @@ export class TileLevel implements ILevel {
     //let endX = startX + this.pixelWidth / this._def.props.tileWidth + 1;
     //let currentY = 0;
     // TODO: add filtering
-    this._def.forEachTile(sprite => {
-      if (sprite !== undefined && sprite !== null) {
-        sprite.draw(ctx);
+    this._def.forEachTile((tile: TileDef | null, sprites: SpriteDefCollection) => {
+      if (tile === null) {
+        return;
       }
+
+      let sprite = this._tileSprites.get(tile.viewId);
+      if (sprite === undefined) {
+        let spriteDef = sprites.getById(tile.id);
+        sprite = spriteDef?.createSprite({ x: tile.x, y: tile.y });
+        if (sprite === undefined) {
+          throw 'unknown sprite';
+        }
+        this._tileSprites.set(tile.viewId, sprite);
+      }
+
+      sprite.draw(ctx);
     });
 
     if (this._editMode) {
@@ -64,9 +77,10 @@ export class TileLevel implements ILevel {
   }
 
   public getGridPosByPixelPos(x: number, y: number) {
-    return new Pos(PosKind.Grid, Math.round(x / this._tileW), Math.round(y / this._tileH));
+    return new Pos(PosKind.Grid, Math.round(x / this._def.props.tileWidth), Math.round(y / this._def.props.tileHeight));
   }
 
+  /*
   // returns block code by position
   public getTileByPixelPos(x: number, y: number): Sprite {
     let blockPos = this.getGridPosByPixelPos(x, y);
@@ -74,7 +88,7 @@ export class TileLevel implements ILevel {
   }
 
   public getPixelPosByGridPos(x: number, y: number) {
-    return new Pos(PosKind.Pixel, x * this._gridW, y * this._gridH);
+    return new Pos(PosKind.Pixel, x * this._def.props.tileWidth, y * this._def.props.tileHeight);
   }
 
   // search down for the first tile we overlap
@@ -90,7 +104,7 @@ export class TileLevel implements ILevel {
     }
 
     return null;
-  }
+  }*/
 
   private drawGrid(ctx: any) {
     ctx.lineWidth = 0.5;
