@@ -9,4 +9,5 @@ export * from './CostumeDef';
 export * from './CodeFileDef';
 export * from './ScreenDef';
 export * from './TileLevelDef';
+export * from './Project';
 export * from './ProjectStorage';
