@@ -52,6 +52,7 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
 
   public processSet(op: any): void {
     this.props = op.props;
+    this.onChange.invoke();
   }
 
   public processAdd(childId: string, op: any): void {
@@ -60,9 +61,11 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
       this.sprites.push(SpriteDef.fromOp(this._storage, this, childId, op));
     } else if (op.target === 'TileLevel') {
       this._level = TileLevelDef.fromOp(this._storage, this, childId, this._sprites, op);
+      console.log(typeof this._level);
     } else {
       this._codeFile = CodeFileDef.fromOp(this._storage, this, childId, op);
     }
+    this.onChange.invoke();
   }
 
   private createUpdateOp() {
@@ -77,6 +80,7 @@ export class ScreenDef extends ObjectDef implements IStorageOpReceiver {
     this.props.screenHeight = screenHeight;
 
     this._storage.setItem('screen', undefined, this.createUpdateOp());
+    this.onChange.invoke();
   }
 
   /**

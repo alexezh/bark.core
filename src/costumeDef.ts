@@ -5,6 +5,7 @@ import { IProjectStorage, IStorageOpReceiver, StorageOp, StorageOpKind } from '.
 import { ObjectDef, IObjectDef } from './ObjectDef';
 import { SpriteDef } from './SpriteDef';
 import { ISpriteSource } from './SpriteSource';
+import { isThisTypeNode } from 'typescript';
 
 export enum ImageFormat {
   svg,
@@ -119,12 +120,16 @@ export class CostumeImage implements ISpriteSource {
       this.loadImage();
     }
 
-    ctx.drawImage(this._image, x, y, w, h);
+    if (this._image !== undefined) {
+      ctx.drawImage(this._image, x, y, w, h);
+    }
   }
 
   private loadImage() {
-    this._image = new Image();
-    this._image.src = this._costume.imageData?.image;
+    if (this._costume.imageData?.image !== undefined) {
+      this._image = new Image();
+      this._image.src = this._costume.imageData?.image;
+    }
     this._costumeVersion = this._costume.version;
   }
 }

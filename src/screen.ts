@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { ScreenDef } from './ScreenDef';
 import { ILevel, TileLevel } from './TileLevel'
 
@@ -18,9 +19,12 @@ export class Screen {
 
   public constructor(def: ScreenDef) {
     this._def = def;
+    _.bindAll(this, [
+      'onScreenChange'
+    ]);
 
     this.onScreenChange();
-    this._def.onChange.add(() => this.onScreenChange())
+    this._def.onChange.add(this.onScreenChange)
   }
 
   // screen is a main object of the game
@@ -45,6 +49,8 @@ export class Screen {
   }
 
   public onScreenChange() {
+    console.log('onScreenChange');
+
     if (this._width !== this._def.props.screenWidth ||
       this._height !== this._def.props.screenHeight) {
 
@@ -58,7 +64,7 @@ export class Screen {
       }
     }
 
-    if (this._level === null && this._def.level !== undefined) {
+    if (this._level === undefined && this._def.level !== undefined) {
       console.log('create level');
       this._level = new TileLevel(this._def.level);
     }
